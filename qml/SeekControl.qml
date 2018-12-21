@@ -52,7 +52,7 @@ import QtQuick 2.0
 
 Item {
     id: seekControl
-    height: Math.min(parent.width, parent.height) / 20
+    height: Math.min(parent.width, parent.height) / 25
     property int duration: 0
     property int playPosition: 0
     property int seekPosition: 0

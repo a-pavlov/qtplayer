@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>qml/SeekControl.qml</file>
         <file>qml/Main.qml</file>
+        <file>qml/TestScene.qml</file>
     </qresource>
 </RCC>

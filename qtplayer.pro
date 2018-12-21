@@ -22,6 +22,7 @@ unix:!android {
   include(unixconf.pri)
 }
 
+
 android {
   include(android.pri)
 }
@@ -38,7 +39,7 @@ SOURCES += main.cpp mainwindow.cpp $$PWD/FileMediaStream.cpp
 DESTDIR = .
 
 # Additional import path used to resolve QML modules in Qt Creators code model
-QML_IMPORT_PATH += qml
+#QML_IMPORT_PATH += qml
 
 DISTFILES += \
     qml/SeekControl.qml
