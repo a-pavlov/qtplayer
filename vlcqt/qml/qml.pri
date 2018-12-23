@@ -4,8 +4,7 @@ HEADERS += $$PWD/Qml.h\
     $$PWD/QmlPlayer.h\
     $$PWD/QmlSource.h\
     $$PWD/QmlVideoOutput.h\
-    $$PWD/rendering/QmlVideoStream.h\
-    $$PWD/SharedExportQml.h
+    $$PWD/rendering/QmlVideoStream.h
 
 SOURCES += $$PWD/Qml.cpp\
     $$PWD/QmlPlayer.cpp\

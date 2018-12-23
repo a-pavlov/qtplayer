@@ -13,4 +13,3 @@ ANDROID_EXTRA_LIBS += $$(LIBVLC_LIBS)/libvlc.so
 # INSTALL
 target.path = $$PREFIX/bin/
 INSTALLS += target
-

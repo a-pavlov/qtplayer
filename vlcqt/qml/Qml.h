@@ -19,8 +19,6 @@
 #ifndef VLCQT_QML_H_
 #define VLCQT_QML_H_
 
-#include "SharedExportQml.h"
-
 /*!
     \defgroup VLCQtQml VLC-Qt Qml (VLCQtQml)
     \brief QML classes for controlling video and media playback

@@ -30,8 +30,6 @@
 #include "VideoFrame.h"
 #include "VideoMemoryStream.h"
 
-#include "SharedExportQml.h"
-
 class VlcMediaPlayer;
 
 class GlslPainter;
@@ -45,7 +43,7 @@ class GlslPainter;
 
     \deprecated Deprecated since VLC-Qt 1.1, will be removed in 2.0
  */
-class Q_DECL_DEPRECATED VLCQT_QML_EXPORT VlcQmlVideoObject : public QQuickPaintedItem,
+class Q_DECL_DEPRECATED VlcQmlVideoObject : public QQuickPaintedItem,
                                            public VlcVideoMemoryStream
 {
 Q_OBJECT

@@ -26,8 +26,6 @@
 
 #include "Enums.h"
 
-#include "SharedExportQml.h"
-
 struct VlcYUVVideoFrame;
 class VlcQmlSource;
 
@@ -40,7 +38,7 @@ class VlcQmlSource;
 
     \since VLC-Qt 1.1
  */
-class VLCQT_QML_EXPORT VlcQmlVideoOutput : public QQuickItem
+class VlcQmlVideoOutput : public QQuickItem
 {
     Q_OBJECT
 

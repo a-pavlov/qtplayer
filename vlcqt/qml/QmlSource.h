@@ -22,8 +22,6 @@
 #include <QtCore/QObject>
 #include <QtQml/QQmlParserStatus>
 
-#include "SharedExportQml.h"
-
 class VlcMediaPlayer;
 
 class VlcQmlVideoOutput;
@@ -42,7 +40,7 @@ class VlcQmlVideoStream;
 
     \since VLC-Qt 1.1
  */
-class VLCQT_QML_EXPORT VlcQmlSource : public QObject,
+class VlcQmlSource : public QObject,
                                       public QQmlParserStatus
 {
     Q_OBJECT

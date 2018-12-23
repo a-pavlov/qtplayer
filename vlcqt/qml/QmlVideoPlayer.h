@@ -22,7 +22,6 @@
 #include <QtQuick/QQuickItem>
 
 #include "QmlVideoObject.h"
-#include "SharedExportQml.h"
 
 #include "TrackModel.h"
 
@@ -41,7 +40,7 @@ class VlcVideo;
 
     \deprecated Deprecated since VLC-Qt 1.1, will be removed in 2.0
  */
-class Q_DECL_DEPRECATED VLCQT_QML_EXPORT VlcQmlVideoPlayer : public VlcQmlVideoObject
+class Q_DECL_DEPRECATED VlcQmlVideoPlayer : public VlcQmlVideoObject
 {
 Q_OBJECT
 public:
