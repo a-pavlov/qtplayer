@@ -185,7 +185,7 @@ void VlcQmlPlayer::setUrl(const QUrl &url)
         _media->deleteLater();
 
     if (url.isLocalFile()) {
-        _media = new VlcMedia(url.toLocalFile(), true, _instance);
+        _media = new VlcMedia(new FileMediaStream(url.toLocalFile()), _instance);
         qDebug() << "open local file " << url;
     } else {
         _media = new VlcMedia(url.toString(QUrl::FullyEncoded), false, _instance);

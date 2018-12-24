@@ -54,6 +54,14 @@ ssize_t FileMediaStream::read(unsigned char* buf, size_t len) {
 }
 
 int FileMediaStream::seek(uint64_t offset) {
-    qDebug() << "seek " << offset;
-    return -1;
+    if (!file.isOpen()) return -1;
+    totalBytesBuffer = 0;
+    currentBufferPos = 0;
+    if (file.seek(0l) && file.seek(offset)) {
+        qDebug() << "seeks completed " << offset;
+        return 0;
+    } else {
+        qDebug() << "seek failed " << offset;
+        return -1;
+    }
 }
