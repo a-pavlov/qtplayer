@@ -1,5 +1,6 @@
 import QtQuick 2.3
 import QtQuick.Controls 1.0
+import QtQuick.Controls.Styles 1.4
 
 ApplicationWindow {
     id: tp
@@ -9,6 +10,7 @@ ApplicationWindow {
     visible: true
 
     Rectangle {
+        id: place
         width: 1024
         height: 768
         color: "black"
@@ -20,13 +22,17 @@ ApplicationWindow {
                     bottom: parent.bottom
                     margins: 10
               }
+
               width: Math.max(parent.width, parent.height) / 25
               height: Math.min(parent.width, parent.height) / 25
+              opacity: 1.0
 
               z: 2.0
-              text: "Back"
+              //text: "Back"
               onClicked: root.close()
-        }
+              iconName: "Play"
+              iconSource: "/home/inkpot/dev/qtplayer/images/pause-button.svg"
+        }     
 
         SeekControl {
             anchors {

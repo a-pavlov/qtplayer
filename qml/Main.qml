@@ -56,9 +56,43 @@ ApplicationWindow {
             anchors.fill: parent
         }
 
+        Button {
+              id: playPauseButton
+              property bool playing: true
+              anchors {
+                    left: parent.left
+                    bottom: parent.bottom
+                    margins: 10
+              }
+
+              iconName: "Play"
+              iconSource: playing?"qrc:///images/pause-64.png":"qrc:///images/play-64.png"
+
+              width: Math.max(parent.width, parent.height) / 25
+              height: Math.min(parent.width, parent.height) / 25
+              opacity: 1.0
+
+              z: 2.0
+
+              onClicked: {
+                  console.log("playing " + playing)
+
+                  if (playing) {
+                        player.pause()
+                        playPauseButton.iconSource = "qrc:///images/play-64.png"
+                  } else {
+                        player.play()
+                        playPauseButton.iconSource = "qrc:///images/pause-64.png"
+                  }
+
+                  console.log("img src " + iconSource)
+                  playing = !playing
+                }
+        }
+
         SeekControl {
             anchors {
-                left: parent.left
+                left: playPauseButton.right
                 right: parent.right
                 margins: 10
                 bottom: parent.bottom

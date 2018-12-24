@@ -2,7 +2,7 @@ TEMPLATE = app
 
 QT += qml quick widgets svg network
 
-RESOURCES += qml.qrc
+RESOURCES += qml.qrc images.qrc
 
 QTPLUGN += qsvg
 
