@@ -29,7 +29,9 @@ android {
 
 include(vlcqt/core/core.pri)
 include(vlcqt/qml/qml.pri)
-
+include(utils/utils.pri)
+include(bittorrent/bittorrent.pri)
+#include(net/net.pri)
 
 INCLUDEPATH += vlcqt
 
