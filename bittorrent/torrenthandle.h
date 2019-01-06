@@ -234,13 +234,6 @@ namespace BitTorrent
         QString rootPath(bool actual = false) const;
         QString contentPath(bool actual = false) const;
 
-
-        QSet<QString> tags() const;
-        bool hasTag(const QString &tag) const;
-        bool addTag(const QString &tag);
-        bool removeTag(const QString &tag);
-        void removeAllTags();
-
         bool hasRootFolder() const;
 
         int filesCount() const;

@@ -270,7 +270,6 @@ Session::Session(QObject *parent)
     , m_altGlobalUploadSpeedLimit(10)
     , m_isAltGlobalSpeedLimitEnabled(false)
     , m_isBandwidthSchedulerEnabled(false)
-    , m_saveResumeDataInterval(60)
     , m_port(8999)
     , m_useRandomPort(false)
     , m_isIPv6Enabled(false)
@@ -278,8 +277,7 @@ Session::Session(QObject *parent)
     , m_isForceProxyEnabled(true)
     , m_isProxyPeerConnectionsEnabled(false)
     , m_chokingAlgorithm(ChokingAlgorithm::FixedSlots)
-    , m_seedChokingAlgorithm(SeedChokingAlgorithm::FastestUpload)
-    , m_maxRatioAction(Pause)
+    , m_seedChokingAlgorithm(SeedChokingAlgorithm::FastestUpload)    
     , m_isSubcategoriesEnabled(false)
     , m_isTempPathEnabled(false)
     , m_isAutoTMMDisabledByDefault(true)
@@ -539,47 +537,6 @@ QString Session::torrentTempPath(const TorrentInfo &torrentInfo) const
 }
 
 */
-
-QSet<QString> Session::tags() const
-{
-    return m_tags;
-}
-
-bool Session::isValidTag(const QString &tag)
-{
-    return (!tag.trimmed().isEmpty() && !tag.contains(','));
-}
-
-bool Session::hasTag(const QString &tag) const
-{
-    return m_tags.contains(tag);
-}
-
-bool Session::addTag(const QString &tag)
-{
-    if (!isValidTag(tag))
-        return false;
-
-    if (!hasTag(tag)) {
-        m_tags.insert(tag);
-        m_storedTags = m_tags.toList();
-        emit tagAdded(tag);
-        return true;
-    }
-    return false;
-}
-
-bool Session::removeTag(const QString &tag)
-{
-    if (m_tags.remove(tag)) {
-        foreach (TorrentHandle *const torrent, torrents())
-            torrent->removeTag(tag);
-        m_storedTags = m_tags.toList();
-        emit tagRemoved(tag);
-        return true;
-    }
-    return false;
-}
 
 bool Session::isAutoTMMDisabledByDefault() const
 {
@@ -1532,24 +1489,6 @@ bool Session::hasRunningSeed() const
     });
 }
 
-void Session::banIP(const QString &ip)
-{
-    QStringList bannedIPs = m_bannedIPs;
-    if (!bannedIPs.contains(ip)) {
-        libt::ip_filter filter = m_nativeSession->get_ip_filter();
-        boost::system::error_code ec;
-        libt::address addr = libt::address::from_string(ip.toLatin1().constData(), ec);
-        Q_ASSERT(!ec);
-        if (ec) return;
-        filter.add_rule(addr, addr, libt::ip_filter::blocked);
-        m_nativeSession->set_ip_filter(filter);
-
-        bannedIPs << ip;
-        bannedIPs.sort();
-        m_bannedIPs = bannedIPs;
-    }
-}
-
 // Delete a torrent from the session, given its hash
 // deleteLocalFiles = true means that the torrent will be removed from the hard-drive too
 bool Session::deleteTorrent(const QString &hash, bool deleteLocalFiles)
@@ -2179,27 +2118,6 @@ bool Session::isBandwidthSchedulerEnabled() const
 
 void Session::setBandwidthSchedulerEnabled(bool enabled)
 {
-}
-
-uint Session::saveResumeDataInterval() const
-{
-    return m_saveResumeDataInterval;
-}
-
-void Session::setSaveResumeDataInterval(const uint value)
-{
-    if (value == m_saveResumeDataInterval)
-        return;
-
-    m_saveResumeDataInterval = value;
-
-    if (value > 0) {
-        m_resumeDataTimer->setInterval(value * 60 * 1000);
-        m_resumeDataTimer->start();
-    }
-    else {
-        m_resumeDataTimer->stop();
-    }
 }
 
 int Session::port() const

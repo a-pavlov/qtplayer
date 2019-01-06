@@ -516,48 +516,6 @@ qreal TorrentHandle::progress() const
     return m_nativeStatus.progress;
 }
 
-QSet<QString> TorrentHandle::tags() const
-{
-    return m_tags;
-}
-
-bool TorrentHandle::hasTag(const QString &tag) const
-{
-    return m_tags.contains(tag);
-}
-
-bool TorrentHandle::addTag(const QString &tag)
-{
-    if (!Session::isValidTag(tag))
-        return false;
-
-    if (!hasTag(tag)) {
-        if (!m_session->hasTag(tag))
-            if (!m_session->addTag(tag))
-                return false;
-        m_tags.insert(tag);
-        m_session->handleTorrentTagAdded(this, tag);
-        return true;
-    }
-    return false;
-}
-
-bool TorrentHandle::removeTag(const QString &tag)
-{
-    if (m_tags.remove(tag)) {
-        m_session->handleTorrentTagRemoved(this, tag);
-        return true;
-    }
-    return false;
-}
-
-void TorrentHandle::removeAllTags()
-{
-    // QT automatically copies the container in foreach, so it's safe to mutate it.
-    foreach (const QString &tag, m_tags)
-        removeTag(tag);
-}
-
 QDateTime TorrentHandle::addedTime() const
 {
     return QDateTime::fromTime_t(m_nativeStatus.added_time);

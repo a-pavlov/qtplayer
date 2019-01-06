@@ -248,12 +248,6 @@ namespace BitTorrent
         static void freeInstance();
         static Session *instance();
 
-        static bool isValidTag(const QString &tag);
-        QSet<QString> tags() const;
-        bool hasTag(const QString &tag) const;
-        bool addTag(const QString &tag);
-        bool removeTag(const QString &tag);
-
         // Torrent Management Mode subsystem (TMM)
         //
         // Each torrent can be either in Manual mode or in Automatic mode
@@ -318,8 +312,6 @@ namespace BitTorrent
         bool isBandwidthSchedulerEnabled() const;
         void setBandwidthSchedulerEnabled(bool enabled);
 
-        uint saveResumeDataInterval() const;
-        void setSaveResumeDataInterval(uint value);
         int port() const;
         void setPort(int port);
         bool useRandomPort() const;
@@ -435,8 +427,6 @@ namespace BitTorrent
         quint64 getAlltimeDL() const;
         quint64 getAlltimeUL() const;
         bool isListening() const;
-
-        void banIP(const QString &ip);
 
         bool isKnownTorrent(const InfoHash &hash) const;
         bool addTorrent(QString source, const AddTorrentParams &params = AddTorrentParams());
@@ -665,7 +655,6 @@ namespace BitTorrent
         int m_altGlobalUploadSpeedLimit;
         bool m_isAltGlobalSpeedLimitEnabled;
         bool m_isBandwidthSchedulerEnabled;
-        uint m_saveResumeDataInterval;
         int m_port;
         bool m_useRandomPort;
         QString m_networkInterface;
@@ -679,9 +668,6 @@ namespace BitTorrent
         SeedChokingAlgorithm m_seedChokingAlgorithm;
         QVariantMap m_storedCategories;
         QStringList m_storedTags;
-        int m_maxRatioAction;
-        QString m_defaultSavePath;
-        QString m_tempPath;
         bool m_isSubcategoriesEnabled;
         bool m_isTempPathEnabled;
         bool m_isAutoTMMDisabledByDefault;
@@ -689,7 +675,6 @@ namespace BitTorrent
         bool m_isDisableAutoTMMWhenDefaultSavePathChanged;
         bool m_isDisableAutoTMMWhenCategorySavePathChanged;
         bool m_isTrackerEnabled;
-        QStringList m_bannedIPs;
 
         // Order is important. This needs to be declared after its CachedSettingsValue
         // counterpart, because it uses it for initialization in the constructor
@@ -703,8 +688,6 @@ namespace BitTorrent
 
         QTimer *m_refreshTimer;
         QTimer *m_seedingLimitTimer;
-        QTimer *m_resumeDataTimer;
-        Statistics *m_statistics;
         // IP filtering
         QPointer<FilterParserThread> m_filterParser;
 
@@ -714,8 +697,6 @@ namespace BitTorrent
         QHash<QString, AddTorrentParams> m_downloadedTorrents;
         QHash<InfoHash, RemovingTorrentData> m_removingTorrents;
         TorrentStatusReport m_torrentStatusReport;
-        QStringMap m_categories;
-        QSet<QString> m_tags;
 
         // I/O errored torrents
         QSet<InfoHash> m_recentErroredTorrents;
