@@ -18,10 +18,7 @@ namespace BitTorrent {
         }
 
         int readv(span<iovec_t const> bufs
-                  , piece_index_t piece, int offset, open_mode_t flags, storage_error& ec) override {
-            return -1;
-
-        }
+                  , piece_index_t piece, int offset, open_mode_t flags, storage_error& ec) override;
 
         int writev(span<iovec_t const> bufs
             , piece_index_t piece, int offset, open_mode_t flags, storage_error& ec) override;
@@ -137,5 +134,8 @@ namespace BitTorrent {
         }
     };
 
+    libtorrent::storage_interface* RangeMemoryStorageConstructor(const libtorrent::storage_params& sp, file_pool& fp) {
+        return new RangeMemoryStorage(sp.files);
+    }
 }
 #endif // RANGEMEMORYSTORAGE_H

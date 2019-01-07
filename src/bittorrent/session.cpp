@@ -69,10 +69,11 @@
 #include <libtorrent/session_stats.hpp>
 #endif
 
-#include "magneturi.h"
-#include "torrenthandle.h"
-#include "trackerentry.h"
-#include "fs.h"
+#include "bittorrent/magneturi.h"
+#include "bittorrent/torrenthandle.h"
+#include "bittorrent/trackerentry.h"
+#include "bittorrent/rangememorystorage.h"
+#include "utils/fs.h"
 
 #ifdef Q_OS_WIN
 #include <wincrypt.h>
@@ -1726,6 +1727,8 @@ bool Session::addTorrent_impl(CreateTorrentParams params, const MagnetUri &magne
         // failed upgrade.
         return false;
     }
+
+    p.storage = BitTorrent::RangeMemoryStorageConstructor;
 
     // We should not add torrent if it already
     // processed or adding to session
