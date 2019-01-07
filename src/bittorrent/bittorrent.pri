@@ -11,7 +11,8 @@ HEADERS +=  $$PWD/magneturi.h\
             $$PWD/cachestatus.h \
             $$PWD/tristatebool.h \
             $$PWD/settingvalue.h \
-            $$PWD/peerinfo.h
+            $$PWD/peerinfo.h \
+    $$PWD/rangememorystorage.h
 
 SOURCES +=  $$PWD/magneturi.cpp\
             $$PWD/trackerentry.cpp \
@@ -20,4 +21,5 @@ SOURCES +=  $$PWD/magneturi.cpp\
             $$PWD/torrenthandle.cpp \
             $$PWD/session.cpp \
             $$PWD/tristatebool.cpp \
-            $$PWD/peerinfo.cpp
+            $$PWD/peerinfo.cpp \
+    $$PWD/rangememorystorage.cpp

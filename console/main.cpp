@@ -1,4 +1,7 @@
 #include <QtCore>
+#include <QDebug>
+
+#include "bittorrent/rangememorystorage.h"
 
 class Task : public QObject
 {
@@ -9,8 +12,7 @@ public:
 public slots:
     void run()
     {
-        // Do processing here
-
+        qDebug() << "processing";
         emit finished();
     }
 
@@ -21,6 +23,8 @@ signals:
 #include "main.moc"
 
 int main(int argc, char *argv[]) {
+    qDebug() << "console started";
+
     QCoreApplication a(argc, argv);
 
     // Task parented to the application so that it
@@ -33,6 +37,9 @@ int main(int argc, char *argv[]) {
 
     // This will run the task from the application event loop.
     QTimer::singleShot(0, task, SLOT(run()));
+
+
+    BitTorrent::RangeMemoryStorage rms(libtorrent::file_storage());
 
     return a.exec();
 }
