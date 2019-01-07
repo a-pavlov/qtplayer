@@ -4,8 +4,8 @@
 #include <QKeyEvent>
 #include <QTimer>
 #include <QDebug>
-#include "Instance.h"
-#include "Common.h"
+#include "core/Instance.h"
+#include "core/Common.h"
 #include "qml/Qml.h"
 
 MainWindow::MainWindow(QObject* parent)

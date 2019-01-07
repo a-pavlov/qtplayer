@@ -1,6 +1,6 @@
 #include <QApplication>
 #include <QQmlApplicationEngine>
-#include "Qml.h"
+#include "qml/Qml.h"
 #include "mainwindow.h"
 
 int main(int argc, char** argv) {

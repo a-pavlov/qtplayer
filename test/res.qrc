@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>res/ubuntu-18.10-desktop-amd64.iso.torrent</file>
+    </qresource>
+</RCC>
