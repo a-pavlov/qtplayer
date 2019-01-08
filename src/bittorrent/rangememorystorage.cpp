@@ -1,7 +1,5 @@
 #include "rangememorystorage.h"
 
-#include <QDebug>
-
 namespace BitTorrent {
 
     int bufs_size(span<iovec_t const> bufs)
@@ -33,20 +31,23 @@ namespace BitTorrent {
                                    , int offset
                                    , open_mode_t flags
                                    , storage_error& ec) {
+        qDebug() << Q_FUNC_INFO;
         Q_UNUSED(bufs);
         Q_UNUSED(piece);
         Q_UNUSED(offset);
         Q_UNUSED(flags);
         Q_UNUSED(ec);
 
-        qDebug() << "bufs size " << bufs_size(bufs);
+        int totalSize = bufs_size(bufs);
+        qDebug() << "bufs size " << totalSize;
 
-        for(span<iovec_t const>::iterator itr = bufs.begin(); itr != bufs.end(); ++itr) {
+        for(span<iovec_t const>::iterator itr = bufs.begin(); itr != bufs.end(); ++itr) {            
             auto size = itr->size();
             auto p = itr->data();
-            Q_UNUSED(size);
+            qDebug() << "buffer size " << size;
             Q_UNUSED(p);
         }
-        return -1;
+
+        return totalSize;
     }
 }

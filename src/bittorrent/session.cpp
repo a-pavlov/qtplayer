@@ -1627,14 +1627,15 @@ TorrentStatusReport Session::torrentStatusReport() const
 }
 
 // source - .torrent file path/url or magnet uri
-bool Session::addTorrent(QString source, const AddTorrentParams &params)
-{
-    /*
+bool Session::addTorrent(QString source, const AddTorrentParams &params) {
+    qDebug() << Q_FUNC_INFO << " src: " << source;
     MagnetUri magnetUri(source);
     if (magnetUri.isValid())
         return addTorrent_impl(params, magnetUri);
 
-    if (Utils::Misc::isUrl(source)) {
+    /*
+     * doesn't support network torrents for now
+     if (Utils::Misc::isUrl(source)) {
         LogMsg(tr("Downloading '%1', please wait...", "e.g: Downloading 'xxx.torrent', please wait...").arg(source));
         // Launch downloader
         Net::DownloadHandler *handler =
@@ -1646,19 +1647,12 @@ bool Session::addTorrent(QString source, const AddTorrentParams &params)
         m_downloadedTorrents[handler->url()] = params;
         return true;
     }
-
-    TorrentFileGuard guard(source);
-
-    if (addTorrent_impl(params, MagnetUri(), TorrentInfo::loadFromFile(source))) {
-        guard.markAsAddedToSession();
-        return true;
-    }
-*/
-    return false;
+    */
+    return addTorrent_impl(params, MagnetUri(), TorrentInfo::loadFromFile(source));
 }
 
 bool Session::addTorrent(const TorrentInfo &torrentInfo, const AddTorrentParams &params)
-{
+{   
     if (!torrentInfo.isValid()) return false;
 
     return addTorrent_impl(params, MagnetUri(), torrentInfo);
@@ -1726,15 +1720,14 @@ bool Session::addTorrent_impl(CreateTorrentParams params, const MagnetUri &magne
         // .torrent file to the .fastresume we loaded. Possibly from a
         // failed upgrade.
         return false;
-    }
-
-    p.storage = BitTorrent::RangeMemoryStorageConstructor;
+    }    
 
     // We should not add torrent if it already
     // processed or adding to session
     if (m_addingTorrents.contains(hash) || m_loadedMetadata.contains(hash)) return false;
 
     TorrentHandle *const torrent = m_torrents.value(hash);
+
     if (torrent) {
         if (torrent->isPrivate() || (!fromMagnetUri && torrentInfo.isPrivate()))
             return false;
@@ -1752,16 +1745,17 @@ bool Session::addTorrent_impl(CreateTorrentParams params, const MagnetUri &magne
     else
         p.storage_mode = libt::storage_mode_sparse;
 
-    p.flags |= libt::add_torrent_params::flag_paused; // Start in pause
-    p.flags &= ~libt::add_torrent_params::flag_auto_managed; // Because it is added in paused state
-    p.flags &= ~libt::add_torrent_params::flag_duplicate_is_error; // Already checked
+    p.storage = BitTorrent::RangeMemoryStorageConstructor;
+    //p.flags |= libt::add_torrent_params::flag_paused; // Start in pause
+    //p.flags &= ~libt::add_torrent_params::flag_auto_managed; // Because it is added in paused state
+    //p.flags &= ~libt::add_torrent_params::flag_duplicate_is_error; // Already checked
 
     // Seeding mode
     // Skip checking and directly start seeding (new in libtorrent v0.15)
-    if (params.skipChecking)
-        p.flags |= libt::add_torrent_params::flag_seed_mode;
-    else
-        p.flags &= ~libt::add_torrent_params::flag_seed_mode;
+    //if (params.skipChecking)
+    //    p.flags |= libt::add_torrent_params::flag_seed_mode;
+    //else
+    //    p.flags &= ~libt::add_torrent_params::flag_seed_mode;
 
     /*
     if (!fromMagnetUri) {
@@ -1775,11 +1769,11 @@ bool Session::addTorrent_impl(CreateTorrentParams params, const MagnetUri &magne
         }
     }
 */
-    if (params.restored && !params.paused) {
+    //if (params.restored && !params.paused) {
         // Make sure the torrent will restored in "paused" state
         // Then we will start it if needed
-        p.flags |= libt::add_torrent_params::flag_stop_when_ready;
-    }
+    //    p.flags |= libt::add_torrent_params::flag_stop_when_ready;
+    //}
 
     // Limits
     p.max_connections = maxConnectionsPerTorrent();

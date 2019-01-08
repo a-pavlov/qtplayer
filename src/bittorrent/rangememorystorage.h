@@ -2,6 +2,7 @@
 #define RANGEMEMORYSTORAGE_H
 
 #include <QObject>
+#include <QDebug>
 #include <libtorrent/storage.hpp>
 
 
@@ -14,6 +15,7 @@ namespace BitTorrent {
         RangeMemoryStorage(file_storage const& fs);
 
         void initialize(storage_error& se) override {
+            qDebug() << Q_FUNC_INFO;
             Q_UNUSED(se);
         }
 
@@ -29,6 +31,7 @@ namespace BitTorrent {
         //
         // If an error occurs, ``storage_error`` should be set to reflect it.
         bool has_any_file(storage_error& ec) override {
+            qDebug() << Q_FUNC_INFO;
             Q_UNUSED(ec);
             return false;
         }
@@ -38,6 +41,7 @@ namespace BitTorrent {
         // when called
         void set_file_priority(aux::vector<download_priority_t, file_index_t>& prio
                                , storage_error& ec) override {
+            qDebug() << Q_FUNC_INFO;
             Q_UNUSED(prio);
             Q_UNUSED(ec);
         }
@@ -52,6 +56,7 @@ namespace BitTorrent {
         //If an error occurs, ``storage_error`` should be set to reflect it.
         virtual status_t move_storage(std::string const& save_path
                                       , move_flags_t flags, storage_error& ec) override {
+            qDebug() << Q_FUNC_INFO;
             Q_UNUSED(save_path);
             Q_UNUSED(flags);
             Q_UNUSED(ec);
@@ -78,6 +83,7 @@ namespace BitTorrent {
         bool verify_resume_data(add_torrent_params const& rd
             , aux::vector<std::string, file_index_t> const& links
                                 , storage_error& ec) override {
+            qDebug() << Q_FUNC_INFO;
             Q_UNUSED(rd);
             Q_UNUSED(links);
             Q_UNUSED(ec);
@@ -91,6 +97,7 @@ namespace BitTorrent {
         // If an error occurs, ``storage_error`` should be set to reflect it.
         //
         void release_files(storage_error& ec) override {
+            qDebug() << Q_FUNC_INFO;
             Q_UNUSED(ec);
         }
 
@@ -100,6 +107,7 @@ namespace BitTorrent {
         //
         void rename_file(file_index_t index, std::string const& new_filename
                          , storage_error& ec) override {
+            qDebug() << Q_FUNC_INFO;
             Q_UNUSED(index);
             Q_UNUSED(new_filename);
             Q_UNUSED(ec);
@@ -129,12 +137,13 @@ namespace BitTorrent {
         //
         //		};
         virtual void delete_files(remove_flags_t options, storage_error& ec) override {
+            qDebug() << Q_FUNC_INFO;
             Q_UNUSED(options);
             Q_UNUSED(ec);
         }
     };
 
-    libtorrent::storage_interface* RangeMemoryStorageConstructor(const libtorrent::storage_params& sp, file_pool& fp) {
+    inline libtorrent::storage_interface* RangeMemoryStorageConstructor(const libtorrent::storage_params& sp, file_pool& fp) {
         return new RangeMemoryStorage(sp.files);
     }
 }
