@@ -33,6 +33,7 @@
 #include <cstdlib>
 #include <queue>
 #include <string>
+#include <functional>
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -953,6 +954,7 @@ void Session::configure(libtorrent::settings_pack &settingsPack)
     settingsPack.set_int(libt::settings_pack::send_buffer_watermark_factor, sendBufferWatermarkFactor());
 
     settingsPack.set_bool(libt::settings_pack::anonymous_mode, isAnonymousModeEnabled());
+    settingsPack.set_bool(libt::settings_pack::strict_end_game_mode, true);
 
     // Queueing System
     if (isQueueingSystemEnabled()) {
@@ -1658,6 +1660,38 @@ bool Session::addTorrent(const TorrentInfo &torrentInfo, const AddTorrentParams 
     return addTorrent_impl(params, MagnetUri(), torrentInfo);
 }
 
+void Session::addTorrent2(const TorrentInfo& torrentInfo) {
+    libt::add_torrent_params p;
+    p.ti = torrentInfo.nativeInfo();
+    //p.storage = std::bind(&BitTorrent::RangeMemoryStorage::getInterface, &rms, std::placeholders::_1, std::placeholders::_2);
+    p.storage = [this, & torrentInfo](const libtorrent::storage_params& sp, file_pool& fp) -> libtorrent::storage_interface* {
+        return new BitTorrent::RangeMemoryStorage(sp.files, this, torrentInfo.pieceLength());
+    };
+
+    // experemental priorities set
+    p.piece_priorities.resize(static_cast<size_t>(torrentInfo.piecesCount()), libtorrent::dont_download);
+    qDebug() << "set dont_download priorities: " << p.piece_priorities.size() << " piece size: " << torrentInfo.pieceLength();
+    p.piece_priorities[2] = libtorrent::default_priority;
+    p.piece_priorities[1] = libtorrent::default_priority;
+    p.piece_priorities[0] = libtorrent::top_priority;
+
+    p.flags &= ~libt::torrent_flags::auto_managed;
+    p.flags |= libt::torrent_flags::sequential_download;
+    handle = m_nativeSession->add_torrent(p);
+
+    for(int i = 0; i < 10; ++i) {
+        qDebug() << "piece: " << i << " priority: " << handle.piece_priority(i);
+    }
+
+    if (handle.is_valid() ) {
+        InfoHash hash(handle.torrent_file()->info_hash());
+        qDebug() << "Torrent added " << hash;
+        handle.resume();
+    } else {
+        qDebug() << "Torrent add failed";
+    }
+}
+
 // Add a torrent to the BitTorrent session
 bool Session::addTorrent_impl(CreateTorrentParams params, const MagnetUri &magnetUri,
                               TorrentInfo torrentInfo, const QByteArray &fastresumeData)
@@ -1740,12 +1774,24 @@ bool Session::addTorrent_impl(CreateTorrentParams params, const MagnetUri &magne
     qDebug(" -> Hash: %s", qUtf8Printable(hash));
 
     // Preallocation mode
-    if (isPreallocationEnabled())
-        p.storage_mode = libt::storage_mode_allocate;
-    else
-        p.storage_mode = libt::storage_mode_sparse;
+    //if (isPreallocationEnabled())
+    //    p.storage_mode = libt::storage_mode_allocate;
+    //else
+    //    p.storage_mode = libt::storage_mode_sparse;
 
-    p.storage = BitTorrent::RangeMemoryStorageConstructor;
+    //p.storage = BitTorrent::RangeMemoryStorageConstructor;
+    // experemental priorities set
+    p.piece_priorities.resize(static_cast<size_t>(torrentInfo.piecesCount()), libtorrent::dont_download);
+    qDebug() << "set dont_download priorities: " << p.piece_priorities.size() << " piece size: " << torrentInfo.pieceLength();
+    p.piece_priorities[2] = libtorrent::top_priority;
+    p.piece_priorities[1] = libtorrent::default_priority;
+    p.piece_priorities[0] = libtorrent::low_priority;
+
+    qDebug() << "piece 0: " << p.piece_priorities.at(0)
+             << " piece 1: " << p.piece_priorities.at(1)
+             << " piece 2: " << p.piece_priorities.at(2)
+             << " piece 3808: " << p.piece_priorities.at(3808);
+
     //p.flags |= libt::add_torrent_params::flag_paused; // Start in pause
     //p.flags &= ~libt::add_torrent_params::flag_auto_managed; // Because it is added in paused state
     //p.flags &= ~libt::add_torrent_params::flag_duplicate_is_error; // Already checked
@@ -1776,11 +1822,21 @@ bool Session::addTorrent_impl(CreateTorrentParams params, const MagnetUri &magne
     //}
 
     // Limits
-    p.max_connections = maxConnectionsPerTorrent();
-    p.max_uploads = maxUploadsPerTorrent();
-    p.save_path = Utils::Fs::toNativePath(savePath).toStdString();
-    p.upload_limit = params.uploadLimit;
-    p.download_limit = params.downloadLimit;
+    //p.max_connections = maxConnectionsPerTorrent();
+    //p.max_uploads = maxUploadsPerTorrent();
+    //p.save_path = Utils::Fs::toNativePath(savePath).toStdString();
+    //p.upload_limit = params.uploadLimit;
+    //p.download_limit = params.downloadLimit;
+
+    p.flags &= ~libt::torrent_flags::auto_managed;
+    p.flags |= libt::torrent_flags::sequential_download;
+    qDebug() << "flags " << p.flags;
+    if (p.flags & libt::torrent_flags::auto_managed) {
+        qDebug() << "auto mode";
+    } else {
+        qDebug() << "manual mode";
+    }
+
 
     m_addingTorrents.insert(hash, params);
     // Adding torrent to BitTorrent session
@@ -3253,6 +3309,12 @@ void Session::createTorrentHandle(const libt::torrent_handle &nativeHandle)
         m_seedingLimitTimer->start();
 
     // Send torrent addition signal
+    // print piece priorities
+    //auto pp = torrent->nativeHandle().piece_priorities();
+    for(int i = 0; i < 40; ++i) {
+        qDebug() << "piece " << i << " priority: " << torrent->nativeHandle().piece_priority(i);
+    }
+
     emit torrentAdded(torrent);
     // Send new torrent signal
     if (!params.restored)

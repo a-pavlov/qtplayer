@@ -4,15 +4,23 @@
 #include <QObject>
 #include <QDebug>
 #include <libtorrent/storage.hpp>
+#include <QMap>
 
 
 namespace BitTorrent {
+    class Session;
     using namespace libtorrent;
 
     class RangeMemoryStorage : public libtorrent::storage_interface
     {
+    private:
+        QMap<int, int> pieceStatus;
+        Session* session;
+        int pieceLength;
     public:
-        RangeMemoryStorage(file_storage const& fs);
+        RangeMemoryStorage(file_storage const& fs
+                           , Session* session
+                           , int pieceLen);
 
         void initialize(storage_error& se) override {
             qDebug() << Q_FUNC_INFO;
@@ -98,6 +106,9 @@ namespace BitTorrent {
         //
         void release_files(storage_error& ec) override {
             qDebug() << Q_FUNC_INFO;
+            foreach(const int key, pieceStatus.keys()) {
+                qDebug() << "piece: " << key << " bytes: " << pieceStatus.value(key);
+            }
             Q_UNUSED(ec);
         }
 
@@ -141,10 +152,12 @@ namespace BitTorrent {
             Q_UNUSED(options);
             Q_UNUSED(ec);
         }
-    };
 
-    inline libtorrent::storage_interface* RangeMemoryStorageConstructor(const libtorrent::storage_params& sp, file_pool& fp) {
-        return new RangeMemoryStorage(sp.files);
-    }
+        inline libtorrent::storage_interface* getInterface(const libtorrent::storage_params& sp, file_pool& fp) {
+            Q_UNUSED(sp);
+            Q_UNUSED(fp);
+            return this;
+        }
+    };
 }
 #endif // RANGEMEMORYSTORAGE_H

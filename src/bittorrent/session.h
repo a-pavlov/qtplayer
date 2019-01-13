@@ -31,6 +31,7 @@
 #define BITTORRENT_SESSION_H
 
 #include <libtorrent/version.hpp>
+#include <libtorrent/torrent_handle.hpp>
 
 #include <vector>
 
@@ -248,6 +249,8 @@ namespace BitTorrent
         static void freeInstance();
         static Session *instance();
 
+        libtorrent::torrent_handle handle;
+
         // Torrent Management Mode subsystem (TMM)
         //
         // Each torrent can be either in Manual mode or in Automatic mode
@@ -431,6 +434,7 @@ namespace BitTorrent
         bool isKnownTorrent(const InfoHash &hash) const;
         bool addTorrent(QString source, const AddTorrentParams &params = AddTorrentParams());
         bool addTorrent(const TorrentInfo &torrentInfo, const AddTorrentParams &params = AddTorrentParams());
+        void addTorrent2(const TorrentInfo &torrentInfo);
         bool deleteTorrent(const QString &hash, bool deleteLocalFiles = false);
         bool loadMetadata(const MagnetUri &magnetUri);
         bool cancelLoadMetadata(const InfoHash &hash);
