@@ -25,8 +25,10 @@ include(bittorrent/bittorrent.pri)
 
 INCLUDEPATH += $$PWD/vlcqt $$PWD
 
-HEADERS += FileMediaStream.h
-SOURCES += FileMediaStream.cpp
+HEADERS += FileMediaStream.h \
+    PieceMemoryStorage.h
+SOURCES += FileMediaStream.cpp \
+    PieceMemoryStorage.cpp
 
 
 DESTDIR = .
