@@ -7,10 +7,12 @@
 #include <QList>
 #include <QPair>
 
+#include <vector>
+
 struct Piece {
-    int index;
-    int capacity;
-    int size;
+    qint32 index;
+    qint32 capacity;
+    qint32 size;
     unsigned char* ptr;
     bool isFull() const {
         return capacity == size;
@@ -24,20 +26,23 @@ private:
     QMutex mutex;
     QWaitCondition bufferHasData;
     QList<Piece> pieces;
-    int pieceSize;
-    int maxPieces;
+    qint32 pieceSize;
+    qint32 maxPieces;
     quint64 fileSize;
     quint64 fileOffset;
     quint64 readingCursorPosition;
-
+    std::vector<unsigned char> buffer;
     bool isFirstMemoryBlock(const Piece& piece) const {
-        return false;
+        return piece.ptr == buffer.data();
     }
 
 public:
-    PieceMemoryStorage(int pieceSize, int maxPieces);
+    PieceMemoryStorage(unsigned pieceSize, unsigned maxPieces);
     int read(unsigned char* buf, size_t len);
-    void write(unsigned char* buf, size_t len);
+    void write(unsigned char* buf
+               , int len
+               , int offset
+               , qint32 pieceIndex);
     int seek(quint64 pos);
 
     /**
@@ -46,6 +51,8 @@ public:
      * @return one or two memory ranges two ranges in case of no-continuous memory blocks
      */
     QPair<Range, Range> obtainRanges(size_t len);
+
+    void requestPieces();
 };
 
 #endif // PIECEMEMORYSTORAGE_H
