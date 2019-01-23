@@ -2,11 +2,12 @@
 
 #include <QMutexLocker>
 
-PieceMemoryStorage::PieceMemoryStorage(unsigned pieceSize
-                                       , unsigned maxPieces) :
+PieceMemoryStorage::PieceMemoryStorage(int pieceSize
+                                       , int maxPieces) :
     pieceSize(pieceSize)
   , maxPieces(maxPieces)
   , buffer(pieceSize*maxPieces)
+  , pieceMemoryCounter(0)
 {
 
 }
@@ -36,9 +37,9 @@ void PieceMemoryStorage::write(unsigned char* buf
     QMutexLocker lock(&mutex);
     QList<Piece>::iterator itr = std::find_if(pieces.begin(), pieces.end(), [pieceIndex](const Piece& piece){ return piece.index == pieceIndex; });
     if (itr != pieces.end()) {
-        Q_ASSERT(itr->ptr != nullptr);
+        Q_ASSERT(getMemory(itr->pieceMemoryIndex) != nullptr);
         Q_ASSERT(itr->size >= offset + len);
-        memcpy(itr->ptr + offset, buf, len);
+        memcpy(getMemory(itr->pieceMemoryIndex) + offset, buf, len);
     }
 }
 
@@ -70,8 +71,8 @@ QPair<Range, Range> PieceMemoryStorage::obtainRanges(size_t len) {
         // first piece reading started from some offset
         qint32 takeBytes = qMin(bytesRemain, static_cast<qint32>(itr->size - readingCursorInPiece));
 
-        if (isFirstMemoryBlock(*itr)) rangeIndex = 1;
-        if (ranges[rangeIndex].first == nullptr) ranges[rangeIndex].first = itr->ptr;
+        if (itr->pieceMemoryIndex == 0) rangeIndex = 1;
+        if (ranges[rangeIndex].first == nullptr) ranges[rangeIndex].first = getMemory(itr->pieceMemoryIndex);
         ranges[rangeIndex].second += takeBytes;
         bytesRemain -= takeBytes;
 
@@ -97,4 +98,10 @@ QPair<Range, Range> PieceMemoryStorage::obtainRanges(size_t len) {
 
 void PieceMemoryStorage::requestPieces() {
     if (pieces.size() == maxPieces) return;
+}
+
+unsigned char* PieceMemoryStorage::getMemory(int index) {
+    Q_ASSERT(index >= 0);
+    Q_ASSERT(index < maxPieces);
+    return &buffer[index * pieceSize];
 }

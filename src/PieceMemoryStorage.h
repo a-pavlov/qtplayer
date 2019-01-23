@@ -13,7 +13,8 @@ struct Piece {
     qint32 index;
     qint32 capacity;
     qint32 size;
-    unsigned char* ptr;
+    int pieceMemoryIndex;
+
     bool isFull() const {
         return capacity == size;
     }
@@ -31,13 +32,13 @@ private:
     quint64 fileSize;
     quint64 fileOffset;
     quint64 readingCursorPosition;
-    std::vector<unsigned char> buffer;
-    bool isFirstMemoryBlock(const Piece& piece) const {
-        return piece.ptr == buffer.data();
-    }
 
+    std::vector<unsigned char> buffer;
+    int pieceMemoryCounter;
+
+    unsigned char* getMemory(int);
 public:
-    PieceMemoryStorage(unsigned pieceSize, unsigned maxPieces);
+    PieceMemoryStorage(int pieceSize, int maxPieces);
     int read(unsigned char* buf, size_t len);
     void write(unsigned char* buf
                , int len
