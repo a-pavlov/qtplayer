@@ -98,10 +98,15 @@ QPair<Range, Range> PieceMemoryStorage::obtainRanges(size_t len) {
 
 void PieceMemoryStorage::requestPieces() {
     if (pieces.size() == maxPieces) return;
+
 }
 
 unsigned char* PieceMemoryStorage::getMemory(int index) {
     Q_ASSERT(index >= 0);
     Q_ASSERT(index < maxPieces);
     return &buffer[index * pieceSize];
+}
+
+int PieceMemoryStorage::nextPieceMemoryIndex(int currentIndex) const {
+    return currentIndex % maxPieces;
 }

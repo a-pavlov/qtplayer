@@ -54,6 +54,8 @@ public:
     QPair<Range, Range> obtainRanges(size_t len);
 
     void requestPieces();
+
+    int nextPieceMemoryIndex(int) const;
 };
 
 #endif // PIECEMEMORYSTORAGE_H
