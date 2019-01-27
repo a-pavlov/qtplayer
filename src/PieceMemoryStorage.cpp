@@ -2,12 +2,24 @@
 
 #include <QMutexLocker>
 
+Piece::Piece(int index, int capacity, int pieceMemoryIndex):
+    index(index)
+  , capacity(capacity)
+  , pieceMemoryIndex(pieceMemoryIndex) {
+}
+
+int Piece::bytesAvailable() const {
+    return range.getSegments().isEmpty() || range.getSegments().at(0).first != 0?
+                0:range.getSegments().at(0).second - range.getSegments().at(0).first;
+}
+
 PieceMemoryStorage::PieceMemoryStorage(int pieceSize
                                        , int maxPieces) :
     pieceSize(pieceSize)
   , maxPieces(maxPieces)
   , buffer(pieceSize*maxPieces)
   , pieceMemoryCounter(0)
+  , currentPieceIndex(0)
 {
 
 }
@@ -17,9 +29,7 @@ int PieceMemoryStorage::read(unsigned char* buf, size_t len) {
     Q_UNUSED(len);
     QMutexLocker lock(&mutex);
     // obtain bytes
-    QPair<Range, Range> ranges = obtainRanges(len);
-
-
+    QPair<MemoryBlock, MemoryBlock> ranges = obtainRanges(len);
 
     if (ranges.first.first == nullptr && ranges.second.first == nullptr) {
         bufferHasData.wait(&mutex);
@@ -38,8 +48,9 @@ void PieceMemoryStorage::write(unsigned char* buf
     QList<Piece>::iterator itr = std::find_if(pieces.begin(), pieces.end(), [pieceIndex](const Piece& piece){ return piece.index == pieceIndex; });
     if (itr != pieces.end()) {
         Q_ASSERT(getMemory(itr->pieceMemoryIndex) != nullptr);
-        Q_ASSERT(itr->size >= offset + len);
+        Q_ASSERT(itr->capacity >= offset + len);
         memcpy(getMemory(itr->pieceMemoryIndex) + offset, buf, len);
+        itr->range += qMakePair(offset, offset + len);
     }
 }
 
@@ -48,7 +59,7 @@ int PieceMemoryStorage::seek(quint64 pos) {
     return -1;
 }
 
-QPair<Range, Range> PieceMemoryStorage::obtainRanges(size_t len) {
+QPair<MemoryBlock, MemoryBlock> PieceMemoryStorage::obtainRanges(size_t len) {
     quint64 absoluteReadingPosition = readingCursorPosition + fileOffset;
     qint32 pieceIndex = static_cast<qint32>(absoluteReadingPosition / static_cast<quint64>(pieceSize));
     Q_ASSERT(absoluteReadingPosition >= static_cast<quint64>(pieceIndex*pieceSize));
@@ -56,7 +67,7 @@ QPair<Range, Range> PieceMemoryStorage::obtainRanges(size_t len) {
 
     assert(readingCursorInPiece < pieceSize);
 
-    Range ranges[2] = {{nullptr, 0}, {nullptr, 0}};
+    MemoryBlock ranges[2] = {{nullptr, 0}, {nullptr, 0}};
     int rangeIndex = 0;
     QList<Piece>::iterator itr = pieces.begin();    
 
@@ -64,12 +75,12 @@ QPair<Range, Range> PieceMemoryStorage::obtainRanges(size_t len) {
 
     for(;itr != pieces.end(); ++itr) {
         // not enough bytes
-        if (itr->size <= readingCursorInPiece) {
+        if (itr->bytesAvailable() <= readingCursorInPiece) {
             break;
         }
 
         // first piece reading started from some offset
-        qint32 takeBytes = qMin(bytesRemain, static_cast<qint32>(itr->size - readingCursorInPiece));
+        qint32 takeBytes = qMin(bytesRemain, static_cast<qint32>(itr->bytesAvailable() - readingCursorInPiece));
 
         if (itr->pieceMemoryIndex == 0) rangeIndex = 1;
         if (ranges[rangeIndex].first == nullptr) ranges[rangeIndex].first = getMemory(itr->pieceMemoryIndex);
@@ -81,7 +92,7 @@ QPair<Range, Range> PieceMemoryStorage::obtainRanges(size_t len) {
 
         if (bytesRemain == 0) {
             // all bytes from piece were captured - piece has to be full
-            if (takeBytes == (itr->size - readingCursorInPiece)) {
+            if (takeBytes == (itr->bytesAvailable() - readingCursorInPiece)) {
                 Q_ASSERT(itr->isFull());
                 ++itr;
             }

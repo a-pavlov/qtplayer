@@ -9,18 +9,24 @@
 
 #include <vector>
 
+#include "Range.h"
+
 struct Piece {
     qint32 index;
     qint32 capacity;
-    qint32 size;
     int pieceMemoryIndex;
+    Range<int> range;
+
+    Piece(int index, int capacity, int pieceMemoryIndex);
 
     bool isFull() const {
-        return capacity == size;
+        return capacity == bytesAvailable();
     }
+
+    int bytesAvailable() const;
 };
 
-typedef QPair<unsigned char*, int> Range;
+typedef QPair<unsigned char*, int> MemoryBlock;
 
 class PieceMemoryStorage {
 private:
@@ -35,8 +41,10 @@ private:
 
     std::vector<unsigned char> buffer;
     int pieceMemoryCounter;
+    int currentPieceIndex;
 
     unsigned char* getMemory(int);
+
 public:
     PieceMemoryStorage(int pieceSize, int maxPieces);
     int read(unsigned char* buf, size_t len);
@@ -51,11 +59,11 @@ public:
      * @param len in bytes
      * @return one or two memory ranges two ranges in case of no-continuous memory blocks
      */
-    QPair<Range, Range> obtainRanges(size_t len);
+    QPair<MemoryBlock, MemoryBlock> obtainRanges(size_t len);
 
     void requestPieces();
 
-    int nextPieceMemoryIndex(int) const;
+    int nextPieceMemoryIndex(int) const;    
 };
 
 #endif // PIECEMEMORYSTORAGE_H

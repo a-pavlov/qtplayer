@@ -26,7 +26,9 @@ include(bittorrent/bittorrent.pri)
 INCLUDEPATH += $$PWD/vlcqt $$PWD
 
 HEADERS += FileMediaStream.h \
-    PieceMemoryStorage.h
+    PieceMemoryStorage.h \
+    Range.h
+
 SOURCES += FileMediaStream.cpp \
     PieceMemoryStorage.cpp
 
