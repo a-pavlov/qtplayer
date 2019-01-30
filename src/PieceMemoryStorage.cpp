@@ -13,15 +13,26 @@ int Piece::bytesAvailable() const {
                 0:range.getSegments().at(0).second - range.getSegments().at(0).first;
 }
 
-PieceMemoryStorage::PieceMemoryStorage(int pieceSize
-                                       , int maxPieces) :
-    pieceSize(pieceSize)
-  , maxPieces(maxPieces)
-  , buffer(pieceSize*maxPieces)
-  , pieceMemoryCounter(0)
-  , currentPieceIndex(0)
-{
-
+PieceMemoryStorage::PieceMemoryStorage(int pieceLength
+                                       , int lastPieceLength
+                                       , int firstPiece
+                                       , int lastPiece
+                                       , int maxPieces
+                                       , qlonglong fileSize
+                                       , qlonglong fileOffset) :
+    pieceLength(pieceLength)
+  , lastPieceLength(lastPieceLength)
+  , firstPiece(firstPiece)
+  , lastPiece(lastPiece)
+  , maxPieces(std::min(maxPieces, lastPiece - firstPiece + 1))
+  , lastRequestedPiece(-1)
+  , buffer(std::min(maxPieces, lastPiece - firstPiece + 1))
+  , memoryIndex(0)
+  , fileSize(fileSize)
+  , fileOffset(fileOffset)
+  , fileReadOffset(0l)
+{   
+    requestPieces();
 }
 
 int PieceMemoryStorage::read(unsigned char* buf, size_t len) {
@@ -51,6 +62,9 @@ void PieceMemoryStorage::write(unsigned char* buf
         Q_ASSERT(itr->capacity >= offset + len);
         memcpy(getMemory(itr->pieceMemoryIndex) + offset, buf, len);
         itr->range += qMakePair(offset, offset + len);
+        if (itr->bytesAvailable() > 0 && itr == pieces.begin()) {
+            // first piece has got bytes, wake all
+        }
     }
 }
 
@@ -60,12 +74,13 @@ int PieceMemoryStorage::seek(quint64 pos) {
 }
 
 QPair<MemoryBlock, MemoryBlock> PieceMemoryStorage::obtainRanges(size_t len) {
-    quint64 absoluteReadingPosition = readingCursorPosition + fileOffset;
-    qint32 pieceIndex = static_cast<qint32>(absoluteReadingPosition / static_cast<quint64>(pieceSize));
-    Q_ASSERT(absoluteReadingPosition >= static_cast<quint64>(pieceIndex*pieceSize));
-    qint32 readingCursorInPiece = static_cast<qint32>(absoluteReadingPosition - static_cast<quint64>(pieceIndex*pieceSize));
+    qlonglong absoluteReadingPosition = fileReadOffset + fileOffset;
+    qint32 pieceIndex = static_cast<qint32>(absoluteReadingPosition / static_cast<qlonglong>(pieceLength));
+    Q_ASSERT(absoluteReadingPosition >= static_cast<qlonglong>(pieceIndex*pieceLength));
+    qint32 readingCursorInPiece = static_cast<qint32>(absoluteReadingPosition - static_cast<qlonglong>(pieceIndex)*pieceLength);
 
-    assert(readingCursorInPiece < pieceSize);
+    //TODO - use piece length based on piece index
+    assert(readingCursorInPiece < getPieceLength(pieceIndex));
 
     MemoryBlock ranges[2] = {{nullptr, 0}, {nullptr, 0}};
     int rangeIndex = 0;
@@ -109,13 +124,17 @@ QPair<MemoryBlock, MemoryBlock> PieceMemoryStorage::obtainRanges(size_t len) {
 
 void PieceMemoryStorage::requestPieces() {
     if (pieces.size() == maxPieces) return;
-
+    int requestPieces = std::min(maxPieces - pieces.size(), lastPiece - lastRequestedPiece);
+    for(int i = 0; i < requestPieces; ++i) {
+        // assign correct capacity to last piece
+        pieces.append(Piece(++lastRequestedPiece, 100, nextPieceMemoryIndex(memoryIndex++)));
+    }
 }
 
 unsigned char* PieceMemoryStorage::getMemory(int index) {
     Q_ASSERT(index >= 0);
     Q_ASSERT(index < maxPieces);
-    return &buffer[index * pieceSize];
+    return &buffer[static_cast<unsigned int>(index) * static_cast<unsigned int>(pieceLength)];
 }
 
 int PieceMemoryStorage::nextPieceMemoryIndex(int currentIndex) const {

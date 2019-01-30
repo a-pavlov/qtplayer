@@ -32,21 +32,33 @@ class PieceMemoryStorage {
 private:
     QMutex mutex;
     QWaitCondition bufferHasData;
-    QList<Piece> pieces;
-    qint32 pieceSize;
-    qint32 maxPieces;
-    quint64 fileSize;
-    quint64 fileOffset;
-    quint64 readingCursorPosition;
+    QList<Piece> pieces;    
+
+    int pieceLength;
+    int lastPieceLength;
+    int firstPiece;
+    int lastPiece;
+    int maxPieces;
+    int lastRequestedPiece;
+
+
+    qlonglong fileSize;         //!< file size
+    qlonglong fileOffset;       //!< absolute file offset in torrent
+    qlonglong fileReadOffset;   //!< current reading offset in file
 
     std::vector<unsigned char> buffer;
-    int pieceMemoryCounter;
-    int currentPieceIndex;
+
+    int memoryIndex;
 
     unsigned char* getMemory(int);
-
 public:
-    PieceMemoryStorage(int pieceSize, int maxPieces);
+    PieceMemoryStorage(int pieceLength
+                       , int lastPieceLength
+                       , int firstPiece
+                       , int lastPiece
+                       , int maxPieces
+                       , qlonglong fileSize
+                       , qlonglong fileOffset);
     int read(unsigned char* buf, size_t len);
     void write(unsigned char* buf
                , int len
@@ -61,9 +73,22 @@ public:
      */
     QPair<MemoryBlock, MemoryBlock> obtainRanges(size_t len);
 
+    /**
+     * @brief requestPieces register new pieces requests
+     */
     void requestPieces();
 
-    int nextPieceMemoryIndex(int) const;    
+    int nextPieceMemoryIndex(int) const;
+
+    const QList<Piece>& requestedPieces() const {
+        return pieces;
+    }
+
+    constexpr int getPieceLength(int index)  const{
+        Q_ASSERT(index >= firstPiece);
+        Q_ASSERT(index <= lastPiece);
+        return index==lastPiece?lastPieceLength:pieceLength;
+    }
 };
 
 #endif // PIECEMEMORYSTORAGE_H

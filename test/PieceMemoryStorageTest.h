@@ -9,6 +9,7 @@ public:
     PieceMemoryStorageTest(QObject *parent = nullptr);
 private slots:
     void trivialTest();
+    void testBaseScenario();
 };
 
 #endif // PIECEMEMORYSTORAGETEST_H
