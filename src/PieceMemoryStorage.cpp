@@ -25,8 +25,8 @@ PieceMemoryStorage::PieceMemoryStorage(int pieceLength
   , firstPiece(firstPiece)
   , lastPiece(lastPiece)
   , maxPieces(std::min(maxPieces, lastPiece - firstPiece + 1))
-  , lastRequestedPiece(-1)
-  , buffer(std::min(maxPieces, lastPiece - firstPiece + 1))
+  , requestPiece(firstPiece)
+  , buffer(std::min(maxPieces, lastPiece - firstPiece + 1)*pieceLength)
   , memoryIndex(0)
   , fileSize(fileSize)
   , fileOffset(fileOffset)
@@ -46,13 +46,15 @@ int PieceMemoryStorage::read(unsigned char* buf, size_t len) {
         bufferHasData.wait(&mutex);
     }
 
+
+
     return -1;
 }
 
-void PieceMemoryStorage::write(unsigned char* buf
+void PieceMemoryStorage::write(const unsigned char* buf
                                , int len
                                , int offset
-                               , qint32 pieceIndex) {
+                               , int pieceIndex) {
     Q_UNUSED(buf);
     Q_UNUSED(len);
     QMutexLocker lock(&mutex);
@@ -62,6 +64,7 @@ void PieceMemoryStorage::write(unsigned char* buf
         Q_ASSERT(itr->capacity >= offset + len);
         memcpy(getMemory(itr->pieceMemoryIndex) + offset, buf, len);
         itr->range += qMakePair(offset, offset + len);
+
         if (itr->bytesAvailable() > 0 && itr == pieces.begin()) {
             // first piece has got bytes, wake all
         }
@@ -124,10 +127,11 @@ QPair<MemoryBlock, MemoryBlock> PieceMemoryStorage::obtainRanges(size_t len) {
 
 void PieceMemoryStorage::requestPieces() {
     if (pieces.size() == maxPieces) return;
-    int requestPieces = std::min(maxPieces - pieces.size(), lastPiece - lastRequestedPiece);
+    int requestPieces = std::min(maxPieces - pieces.size(), lastPiece - requestPiece + 1);
     for(int i = 0; i < requestPieces; ++i) {
         // assign correct capacity to last piece
-        pieces.append(Piece(++lastRequestedPiece, 100, nextPieceMemoryIndex(memoryIndex++)));
+        pieces.append(Piece(requestPiece, getPieceLength(requestPiece), nextPieceMemoryIndex(memoryIndex++)));
+        ++requestPiece;
     }
 }
 

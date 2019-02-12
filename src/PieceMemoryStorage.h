@@ -39,7 +39,7 @@ private:
     int firstPiece;
     int lastPiece;
     int maxPieces;
-    int lastRequestedPiece;
+    int requestPiece;
 
 
     qlonglong fileSize;         //!< file size
@@ -60,10 +60,10 @@ public:
                        , qlonglong fileSize
                        , qlonglong fileOffset);
     int read(unsigned char* buf, size_t len);
-    void write(unsigned char* buf
+    void write(const unsigned char* buf
                , int len
                , int offset
-               , qint32 pieceIndex);
+               , int pieceIndex);
     int seek(quint64 pos);
 
     /**
