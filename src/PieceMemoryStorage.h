@@ -26,7 +26,11 @@ struct Piece {
     int bytesAvailable() const;
 };
 
-typedef QPair<unsigned char*, int> MemoryBlock;
+
+struct MemoryBlock {
+    const unsigned char* ptr;
+    size_t size;
+};
 
 class PieceMemoryStorage {
 private:
@@ -51,6 +55,8 @@ private:
     int memoryIndex;
 
     unsigned char* getMemory(int);
+    MemoryBlock memBlocks[2];
+    void resetMemBlocks();
 public:
     PieceMemoryStorage(int pieceLength
                        , int lastPieceLength
@@ -67,11 +73,12 @@ public:
     int seek(quint64 pos);
 
     /**
-     * @brief obtainRanges obtain memory ranges to copy into output buffer base on current reading position
+     * @brief obtainRanges obtain memory ranges to copy into output buffer basing on current reading position in file
+     * changing object's internal state!
      * @param len in bytes
-     * @return one or two memory ranges two ranges in case of no-continuous memory blocks
+     * @return noting
      */
-    QPair<MemoryBlock, MemoryBlock> obtainRanges(size_t len);
+    void obtainRanges(size_t len);
 
     /**
      * @brief requestPieces register new pieces requests
@@ -88,7 +95,7 @@ public:
         Q_ASSERT(index >= firstPiece);
         Q_ASSERT(index <= lastPiece);
         return index==lastPiece?lastPieceLength:pieceLength;
-    }
+    }    
 };
 
 #endif // PIECEMEMORYSTORAGE_H

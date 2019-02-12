@@ -8,7 +8,6 @@ PieceMemoryStorageTest::PieceMemoryStorageTest(QObject *parent): QObject (parent
 void PieceMemoryStorageTest::trivialTest() {
     PieceMemoryStorage pieceMemoryStorage(10, 10, 0, 10, 4, 100, 0);
     QPair<MemoryBlock, MemoryBlock> empty = {{nullptr, 0}, {nullptr, 0}};
-    QCOMPARE(empty, pieceMemoryStorage.obtainRanges(100));
     QCOMPARE(0, pieceMemoryStorage.nextPieceMemoryIndex((0)));
     QCOMPARE(1, pieceMemoryStorage.nextPieceMemoryIndex((1)));
     QCOMPARE(2, pieceMemoryStorage.nextPieceMemoryIndex((2)));
@@ -74,6 +73,5 @@ void PieceMemoryStorageTest::testBaseScenario() {
     }
 
     QVERIFY(pieceMemoryStorage.requestedPieces().at(0).isFull());
-
-
+    QVERIFY(!pieceMemoryStorage.requestedPieces().at(1).isFull());
 }

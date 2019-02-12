@@ -30,9 +30,9 @@ PieceMemoryStorage::PieceMemoryStorage(int pieceLength
   , memoryIndex(0)
   , fileSize(fileSize)
   , fileOffset(fileOffset)
-  , fileReadOffset(0l)
-{   
-    requestPieces();
+  , fileReadOffset(0l) {
+    resetMemBlocks();
+    requestPieces();    
 }
 
 int PieceMemoryStorage::read(unsigned char* buf, size_t len) {
@@ -40,13 +40,23 @@ int PieceMemoryStorage::read(unsigned char* buf, size_t len) {
     Q_UNUSED(len);
     QMutexLocker lock(&mutex);
     // obtain bytes
-    QPair<MemoryBlock, MemoryBlock> ranges = obtainRanges(len);
+    obtainRanges(len);
+    size_t totalBytesObtained = memBlocks[0].size + memBlocks[1].size;
+    Q_ASSERT(len >= totalBytesObtained);
+    fileReadOffset += totalBytesObtained;
 
-    if (ranges.first.first == nullptr && ranges.second.first == nullptr) {
-        bufferHasData.wait(&mutex);
+    size_t offset = 0;
+    for(int i = 0; i < 2; ++i) {
+        if (memBlocks[i].ptr != nullptr) {
+            memcpy(buf + offset, memBlocks[i].ptr, memBlocks[i].size);
+            offset = memBlocks[i].size;
+        }
     }
 
-
+    // wait
+    if (memBlocks[0].ptr == nullptr && memBlocks[1].ptr == nullptr) {
+        bufferHasData.wait(&mutex);
+    }
 
     return -1;
 }
@@ -62,7 +72,7 @@ void PieceMemoryStorage::write(const unsigned char* buf
     if (itr != pieces.end()) {
         Q_ASSERT(getMemory(itr->pieceMemoryIndex) != nullptr);
         Q_ASSERT(itr->capacity >= offset + len);
-        memcpy(getMemory(itr->pieceMemoryIndex) + offset, buf, len);
+        memcpy(getMemory(itr->pieceMemoryIndex) + offset, buf, static_cast<size_t>(len));
         itr->range += qMakePair(offset, offset + len);
 
         if (itr->bytesAvailable() > 0 && itr == pieces.begin()) {
@@ -76,16 +86,14 @@ int PieceMemoryStorage::seek(quint64 pos) {
     return -1;
 }
 
-QPair<MemoryBlock, MemoryBlock> PieceMemoryStorage::obtainRanges(size_t len) {
+void PieceMemoryStorage::obtainRanges(size_t len) {
     qlonglong absoluteReadingPosition = fileReadOffset + fileOffset;
     qint32 pieceIndex = static_cast<qint32>(absoluteReadingPosition / static_cast<qlonglong>(pieceLength));
     Q_ASSERT(absoluteReadingPosition >= static_cast<qlonglong>(pieceIndex*pieceLength));
     qint32 readingCursorInPiece = static_cast<qint32>(absoluteReadingPosition - static_cast<qlonglong>(pieceIndex)*pieceLength);
 
-    //TODO - use piece length based on piece index
     assert(readingCursorInPiece < getPieceLength(pieceIndex));
-
-    MemoryBlock ranges[2] = {{nullptr, 0}, {nullptr, 0}};
+    resetMemBlocks();
     int rangeIndex = 0;
     QList<Piece>::iterator itr = pieces.begin();    
 
@@ -101,8 +109,8 @@ QPair<MemoryBlock, MemoryBlock> PieceMemoryStorage::obtainRanges(size_t len) {
         qint32 takeBytes = qMin(bytesRemain, static_cast<qint32>(itr->bytesAvailable() - readingCursorInPiece));
 
         if (itr->pieceMemoryIndex == 0) rangeIndex = 1;
-        if (ranges[rangeIndex].first == nullptr) ranges[rangeIndex].first = getMemory(itr->pieceMemoryIndex);
-        ranges[rangeIndex].second += takeBytes;
+        if (memBlocks[rangeIndex].ptr == nullptr) memBlocks[rangeIndex].ptr = getMemory(itr->pieceMemoryIndex);
+        memBlocks[rangeIndex].size += static_cast<size_t>(takeBytes);
         bytesRemain -= takeBytes;
 
         // current piece is not full - do not move forward
@@ -122,7 +130,6 @@ QPair<MemoryBlock, MemoryBlock> PieceMemoryStorage::obtainRanges(size_t len) {
     }
 
     pieces.erase(pieces.begin(), itr);
-    return {ranges[0], ranges[1]};
 }
 
 void PieceMemoryStorage::requestPieces() {
@@ -143,4 +150,9 @@ unsigned char* PieceMemoryStorage::getMemory(int index) {
 
 int PieceMemoryStorage::nextPieceMemoryIndex(int currentIndex) const {
     return currentIndex % maxPieces;
+}
+
+void PieceMemoryStorage::resetMemBlocks() {
+    memBlocks[0] = {nullptr, 0};
+    memBlocks[1] = {nullptr, 0};
 }
