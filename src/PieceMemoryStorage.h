@@ -63,6 +63,7 @@ public:
                , int len
                , int offset
                , int pieceIndex);
+
     int seek(quint64 pos);
 
     /**

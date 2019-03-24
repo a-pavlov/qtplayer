@@ -98,7 +98,11 @@ void PieceMemoryStorage::write(const unsigned char* buf
 
 int PieceMemoryStorage::seek(quint64 pos) {
     Q_UNUSED(pos);
-    return -1;
+    QMutexLocker lock(&mutex);
+    readingPosition = static_cast<qlonglong>(pos);
+    int p = readingPiece();
+    pieces.erase(std::remove_if(pieces.begin(), pieces.end(), [p](const Piece& piece){ return piece.index < p; }), pieces.end());
+    return 0;
 }
 
 void PieceMemoryStorage::requestPieces() {
