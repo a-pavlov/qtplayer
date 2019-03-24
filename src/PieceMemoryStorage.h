@@ -12,8 +12,8 @@
 #include "Range.h"
 
 struct Piece {
-    qint32 index;
-    qint32 capacity;
+    int index;
+    int capacity;
     int pieceMemoryIndex;
     Range<int> range;
 
@@ -26,17 +26,11 @@ struct Piece {
     int bytesAvailable() const;
 };
 
-
-struct MemoryBlock {
-    const unsigned char* ptr;
-    size_t size;
-};
-
 class PieceMemoryStorage {
 private:
     QMutex mutex;
     QWaitCondition bufferHasData;
-    QList<Piece> pieces;    
+    QList<Piece> pieces;
 
     int pieceLength;
     int lastPieceLength;
@@ -46,17 +40,16 @@ private:
     int requestPiece;
 
 
+    int memoryIndex;
     qlonglong fileSize;         //!< file size
     qlonglong fileOffset;       //!< absolute file offset in torrent
-    qlonglong fileReadOffset;   //!< current reading offset in file
+    qlonglong readingPosition;  //!< current reading offset in file
 
     std::vector<unsigned char> buffer;
 
-    int memoryIndex;
-
     unsigned char* getMemory(int);
-    MemoryBlock memBlocks[2];
-    void resetMemBlocks();
+
+    int readImpl(unsigned char* buf, int len);
 public:
     PieceMemoryStorage(int pieceLength
                        , int lastPieceLength
@@ -73,14 +66,6 @@ public:
     int seek(quint64 pos);
 
     /**
-     * @brief obtainRanges obtain memory ranges to copy into output buffer basing on current reading position in file
-     * changing object's internal state!
-     * @param len in bytes
-     * @return noting
-     */
-    void obtainRanges(size_t len);
-
-    /**
      * @brief requestPieces register new pieces requests
      */
     void requestPieces();
@@ -91,11 +76,24 @@ public:
         return pieces;
     }
 
-    constexpr int getPieceLength(int index)  const{
+    constexpr int getPieceLength(int index)  const {
         Q_ASSERT(index >= firstPiece);
         Q_ASSERT(index <= lastPiece);
         return index==lastPiece?lastPieceLength:pieceLength;
-    }    
+    }
+
+    /**
+     * @brief absoluteReadingPosition
+     * @return current absolute reading position in whole torrent
+     */
+    constexpr qlonglong absoluteReadingPosition() const { return fileOffset + readingPosition; }
+
+    /**
+     * @brief readingPiece
+     * @return current reading piece index
+     */
+    constexpr int readingPiece() const { return static_cast<int>(absoluteReadingPosition() / static_cast<qlonglong>(pieceLength)); }
+
 };
 
 #endif // PIECEMEMORYSTORAGE_H

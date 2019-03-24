@@ -8,7 +8,6 @@ class PieceMemoryStorageTest : public QObject {
 public:
     PieceMemoryStorageTest(QObject *parent = nullptr);
 private slots:
-    void trivialTest();
     void testInitialRequest();
     void testBaseScenario();
 };
