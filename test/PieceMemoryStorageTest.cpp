@@ -172,4 +172,8 @@ void PieceMemoryStorageTest::testWriteRead() {
         qDebug() << "rec " << receiver[i] << " data " << data[i];
         QCOMPARE(receiver[i], data[i]);
     }
+
+    QCOMPARE(pieceMemoryStorage.firstPiece(), 1);
+    QCOMPARE(pieceMemoryStorage.absoluteReadingPosition(), 8ll+4ll);
+    QCOMPARE(pieceMemoryStorage.readingPiece(), 2);
 }
