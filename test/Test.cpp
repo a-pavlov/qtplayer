@@ -16,8 +16,8 @@ int main(int argc, char *argv[]) {
 
     return QTest::qExec(&torrentInfoTest, argc, argv)
             | QTest::qExec(&pieceMemoryStorageTest, argc, argv)
-            | QTest::qExec(&rangeTest, argc, argv)
-            | QTest::qExec(&pieceTest, argc, argv);
+            | QTest::qExec(&pieceTest, argc, argv)
+            | QTest::qExec(&rangeTest, argc, argv);
 }
 
 

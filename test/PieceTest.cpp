@@ -10,7 +10,9 @@ PieceTest::PieceTest(QObject *parent) : QObject(parent)
 }
 
 void PieceTest::testPieceMethods() {
-    Piece piece(0, 100, 0);
+    PieceMemoryStorage pms(0,0,0,0,0);
+    SPMem mem;
+    Piece piece(0, 100, pms, mem);
     piece.range += qMakePair(30, 40);
     QVERIFY(!piece.isFull());
     QCOMPARE(0, piece.bytesAvailable());

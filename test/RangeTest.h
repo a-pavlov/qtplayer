@@ -14,6 +14,7 @@ private slots:
     void testSequentialRanges();
     void testSparseRanges();
     void testBackardRanges();
+    void testSequentialAdd();
 };
 
 #endif // RANGETEST_H

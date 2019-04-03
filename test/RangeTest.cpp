@@ -66,3 +66,7 @@ void RangeTest::testBackardRanges() {
     QCOMPARE(1, range.getSegments().size());
     QCOMPARE(qMakePair(0,200), range.getSegments().at(0));
 }
+
+void RangeTest::testSequentialAdd() {
+    Range<int> range;
+}
