@@ -11,6 +11,7 @@ private slots:
     void testInitialRequest();
     void testMemory();
     void testBaseScenario();
+    void testWriteRead();
 };
 
 #endif // PIECEMEMORYSTORAGETEST_H

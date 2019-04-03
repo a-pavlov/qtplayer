@@ -4,6 +4,8 @@
 #include "PieceMemoryStorageTest.h"
 #include "PieceMemoryStorage.h"
 
+#include <array>
+
 PieceMemoryStorageTest::PieceMemoryStorageTest(QObject *parent): QObject (parent) {}
 
 void PieceMemoryStorageTest::testInitialRequest() {
@@ -104,4 +106,61 @@ void PieceMemoryStorageTest::testBaseScenario() {
 
     QVERIFY(pieceMemoryStorage.requestedPieces().at(0)->isFull());
     QVERIFY(!pieceMemoryStorage.requestedPieces().at(1)->isFull());
+}
+
+/*
+0       1       2       3       4       5       6       7       8
++-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +---+
+|     | |     | |     | |     | |     | |     | |     | |     | |   |
++-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +---+
+           +-----------------------------------------------+
+        8  |XX|-|XXXXX|-|XXXXX|-|XXXXX|-|XXXXX|-|XXXXX|-|XX| 29
+           +-----------------------------------------------+
+
+           +-----------------------------------------------+
+           file length  29 bytes
+           offset       8 bytes
+           piece size   5 bytes
+           total pieces 9
+           last piece   3 bytes
+*/
+
+void PieceMemoryStorageTest::testWriteRead() {
+    constexpr auto pieceLength = 5;
+    constexpr auto lastPieceLength = 5; // in file
+    constexpr auto maxPieces = 3;
+    constexpr auto fileOffset = 8ll;
+    constexpr auto fileSize = 29ll;
+
+    PieceMemoryStorage pieceMemoryStorage(pieceLength
+                                              , lastPieceLength
+                                              , maxPieces
+                                              , fileOffset
+                                              , fileSize);
+    std::array<unsigned char, 3> dummy = {0x03, 0x04, 0x05};
+
+    std::array<unsigned char, 29> data;
+    for(unsigned i = 0; i < data.size(); ++i) {
+        data[i] = static_cast<unsigned char>(i);
+    }
+
+    QCOMPARE(pieceMemoryStorage.readingPiece(), 1);
+    QCOMPARE(pieceMemoryStorage.absoluteReadingPosition(), 8ll);
+    QCOMPARE(pieceMemoryStorage.firstPiece(), 1);
+    QCOMPARE(pieceMemoryStorage.lastPiece(), 7);
+
+    pieceMemoryStorage.requestPieces();
+    const QList<SPPiece>& requestedPieces = pieceMemoryStorage.requestedPieces();
+    QCOMPARE(requestedPieces.size(), maxPieces);
+    QCOMPARE(requestedPieces.at(0)->index, 1);
+    QCOMPARE(requestedPieces.at(1)->index, 2);
+    QCOMPARE(requestedPieces.at(2)->index, 3);
+
+    pieceMemoryStorage.write(&dummy.front(), 2, 0, 0);
+    pieceMemoryStorage.write(&dummy.front(), 3, 0, 1);
+
+    std::array<unsigned char, 4> receiver;
+    int bytes = pieceMemoryStorage.read(&receiver.front(), 4);
+    QCOMPARE(bytes, 0);
+
 }
