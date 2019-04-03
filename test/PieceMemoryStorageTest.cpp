@@ -163,4 +163,13 @@ void PieceMemoryStorageTest::testWriteRead() {
     int bytes = pieceMemoryStorage.read(&receiver.front(), 4);
     QCOMPARE(bytes, 0);
 
+    pieceMemoryStorage.write(&data.front(), 2, 3, 1);
+    pieceMemoryStorage.write((&data.front()) + 2, 3, 0, 2);
+    QVERIFY(requestedPieces.at(0)->isFull());
+    bytes = pieceMemoryStorage.read(&receiver.front(), 4);
+    QCOMPARE(bytes, 4);
+    for(unsigned i = 0; i < 4; ++i) {
+        qDebug() << "rec " << receiver[i] << " data " << data[i];
+        QCOMPARE(receiver[i], data[i]);
+    }
 }

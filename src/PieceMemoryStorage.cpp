@@ -67,7 +67,7 @@ int PieceMemoryStorage::readImpl(unsigned char* buf, int len) {
     int takeBytes = 0;
     if (piece->bytesAvailable() > readingCursorInPiece) {
         takeBytes = qMin(len, piece->bytesAvailable() - readingCursorInPiece);
-        piece->mem->read(buf, 0, len);
+        piece->mem->read(buf, readingCursorInPiece, takeBytes);
         readingPosition += takeBytes;
         // check current piece
         if (readingPiece() > piece->index) {
