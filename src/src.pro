@@ -27,10 +27,12 @@ INCLUDEPATH += $$PWD/vlcqt $$PWD
 
 HEADERS += FileMediaStream.h \
     PieceMemoryStorage.h \
-    Range.h
+    Range.h \
+    FlatPieceMemoryStorage.h
 
 SOURCES += FileMediaStream.cpp \
-    PieceMemoryStorage.cpp
+    PieceMemoryStorage.cpp \
+    FlatPieceMemoryStorage.cpp
 
 
 DESTDIR = .
