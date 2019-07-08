@@ -19,6 +19,11 @@ public:
     const Segments& getSegments() const {
         return segments;
     }
+
+    T bytesAvailable() {
+        return segments.isEmpty() || segments.at(0).first != 0?
+                0:segments.at(0).second - segments.at(0).first;
+    }
 private:
     Segments segments;
     void addSegment(const Segment& segment) {
