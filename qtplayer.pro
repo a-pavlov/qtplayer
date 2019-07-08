@@ -1,7 +1,7 @@
 TEMPLATE = subdirs
 
 unix:!android {
-    SUBDIRS = src player console test
+    SUBDIRS = src player console test storage_test
     player.depends = src
     console.depends = src
     test.depends = src

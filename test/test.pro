@@ -2,8 +2,7 @@ QT += testlib
 SOURCES = Test.cpp \
     PieceMemoryStorageTest.cpp \
     TorrentInfoTest.cpp \
-    RangeTest.cpp \
-    PieceTest.cpp
+    RangeTest.cpp
 RESOURCES += res.qrc
 
 INCLUDEPATH += ../src
@@ -14,5 +13,4 @@ include(../unixconf.pri)
 HEADERS += \
     PieceMemoryStorageTest.h \
     TorrentInfoTest.h \
-    RangeTest.h \
-    PieceTest.h
+    RangeTest.h
