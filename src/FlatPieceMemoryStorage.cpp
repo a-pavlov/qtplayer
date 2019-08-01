@@ -17,9 +17,9 @@ FlatPieceMemoryStorage::FlatPieceMemoryStorage(int pieceLength
         , cacheSizeInPieces(maxCachePieces)
         , fOffset(fileOffset)
         , fSize(fileSize)
-        , absRPos(fileOffset)
-        , absWPos(fileOffset)
+        , absRPos(fileOffset)       
         , updatingBuffer(false) {
+    absWPos = firstPieceOffset();
 }
 
 FlatPieceMemoryStorage::~FlatPieceMemoryStorage() {
@@ -30,8 +30,9 @@ int FlatPieceMemoryStorage::read(unsigned char* buf, size_t len) {
     int length = static_cast<int>(len);
 
     mutex.lock();
-
-    if (absRPos == absWPos) {
+   
+    if (absRPos >= absWPos) {
+        // no bytes available for reading
         bufferNotEmpty.wait(&mutex);
     }
 
@@ -122,21 +123,22 @@ void FlatPieceMemoryStorage::write(const unsigned char* buf
 
         mutex.lock();
 
-        int bytesBefore = itr->second.bytesAvailable();
+        //int bytesBefore = itr->second.bytesAvailable();
         itr->second += qMakePair(offset, offset + len);
         // write data
         int bytesAfter = itr->second.bytesAvailable();
 
         // writing position in current slot
         if (writingSlot == pieceIndex) {
-            // set writing position to new position if bytes available greater than last writing position
+            // set writing position to new position if bytes available greater than last writing position            
             absWPos = std::max(slotAbsPosition + bytesAfter, absWPos);
+
+            if (absWPos > absRPos) {
+                // wake up reading only if absolute writing position greater than absolute reading position
+                bufferNotEmpty.wakeAll();
+            }
         }
-
-        //if (bytesAfter != bytesBefore && ((slotAbsPosition + bytesBefore) == absWPos)) {
-        //    absWPos += len;
-        //}
-
+        
         bufferNotUpdating.wakeAll();
         updatingBuffer = false;
     } else {
@@ -151,7 +153,19 @@ int FlatPieceMemoryStorage::seek(quint64 pos) {
     mutex.lock();
     if (updatingBuffer) bufferNotUpdating.wait(&mutex);
     assert(!updatingBuffer);
+    qlonglong absPos = pos + fOffset;
+    absRPos = absPos;
+    int currentPieceIndex = absWPos / pieceLen;
+    int pieceIndex = absPos / pieceLen;
+    // remove all downloading slots less than current writing border
+    slotList.erase(std::remove_if(slotList.begin(), slotList.end()
+        , [=](Slot slot) {
+            return slot.first < pieceIndex;
+        })
+        , slotList.end());
 
+    // if we are seek in the same slot - use current writing position else set writing position to the start of requested piece
+    absWPos = (currentPieceIndex == pieceIndex) ? absWPos : pieceAbsPos(pieceIndex);
     mutex.unlock();
     return 0;
 }

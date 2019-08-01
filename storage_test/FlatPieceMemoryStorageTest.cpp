@@ -130,7 +130,7 @@ void FlatPieceMemoryStorageTest::testSyncOperating() {
 
     // first piece writing
     pms.write(&data[10], 1, 0, 1);
-    QCOMPARE(pms.absoluteWritingPosition(), 12ll);
+    QCOMPARE(pms.absoluteWritingPosition(), 11ll);
     pms.write(&data[11], 9, 1, 1);
     QCOMPARE(pms.absoluteWritingPosition(), 20ll);
     QCOMPARE(pms.absoluteReadingPosition(), 12ll);

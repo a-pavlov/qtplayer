@@ -31,9 +31,9 @@ private:
      * @brief updatingBuffer true when writing bytes in progress
      */
     bool updatingBuffer;
-    QWaitCondition bufferNotEmpty;
+    QWaitCondition bufferNotEmpty;      // wake this condition in case of absolute writing position moved forward
     QWaitCondition bufferNotFull;
-    QWaitCondition bufferNotUpdating;
+    QWaitCondition bufferNotUpdating;   // wake this condition in case of write method finished
     QList<Slot> slotList;
 public:
     FlatPieceMemoryStorage(int pieceLength
@@ -81,14 +81,20 @@ public:
     qlonglong absoluteReadingPosition();
     qlonglong absoluteWritingPosition();
 
+
+    /* reading bytes by in player's thread. Wait on bufferNotEmpty */
     int read(unsigned char* buf, size_t len);
 
+    /*  move reading position in player's thread, expect it won't be in parallel with reading ^^^.
+        Wait on bufferNotUpdating 
+    */
+    int seek(quint64 pos);
+
+    /* writing bytes to buffer in source thread */
     void write(const unsigned char* buf
         , int len
         , int offset
-        , int pieceIndex);
-
-    int seek(quint64 pos);
+        , int pieceIndex);    
 
     void requestPieces();
 signals:
