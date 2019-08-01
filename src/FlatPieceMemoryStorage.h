@@ -43,35 +43,35 @@ public:
         , qlonglong fileSize);
     ~FlatPieceMemoryStorage();
 
-    constexpr int firstPiece() const { return static_cast<int>((fOffset / pieceLen)); }
-    constexpr int lastPiece() const { return static_cast<int>((fOffset + fSize - 1) / pieceLen); }
-    constexpr int maxPieces() const { return std::min(cacheSizeInPieces, lastPiece() - firstPiece() + 1); }
-    constexpr int cacheSize() const { return pieceLen * cacheSizeInPieces; }
+    int firstPiece() const { return static_cast<int>((fOffset / pieceLen)); }
+    int lastPiece() const { return static_cast<int>((fOffset + fSize - 1) / pieceLen); }
+    int maxPieces() const { return std::min(cacheSizeInPieces, lastPiece() - firstPiece() + 1); }
+    int cacheSize() const { return pieceLen * cacheSizeInPieces; }
 
-    constexpr qlonglong pieceAbsPos(int pieceIndex) const {
+    qlonglong pieceAbsPos(int pieceIndex) const {
         return static_cast<qlonglong>(pieceIndex)*pieceLen;
     }
 
-    constexpr qlonglong firstPieceOffset() const {
+    qlonglong firstPieceOffset() const {
         return pieceAbsPos(firstPiece());
     }
 
-    constexpr int posInCacheByAbsPos(qlonglong absoluteOffset) const {
+    int posInCacheByAbsPos(qlonglong absoluteOffset) const {
         return static_cast<int>((absoluteOffset - firstPieceOffset()) % cacheSize());
     }
 
-    constexpr int posInCacheByPiece(int pieceIndex) const {
+    int posInCacheByPiece(int pieceIndex) const {
         return ((pieceIndex - firstPiece()) % cacheSizeInPieces) * pieceLen;
     }
 
-    constexpr int getPieceLength(int index)  const {
+    int getPieceLength(int index)  const {
         Q_ASSERT(index >= firstPiece());
         Q_ASSERT(index <= lastPiece());
         return index == lastPiece() ? lastPieceLen : pieceLen;
     }
 
     // just for testing purposes
-    constexpr int bytesToBeCopied(int len) {
+    int bytesToBeCopied(int len) {
         int localRPos = posInCacheByAbsPos(absRPos);
         int localWPos = posInCacheByAbsPos(absWPos);
         int distance = localWPos - localRPos;
