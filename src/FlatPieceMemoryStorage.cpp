@@ -17,7 +17,7 @@ FlatPieceMemoryStorage::FlatPieceMemoryStorage(int pieceLength
         , cacheSizeInPieces(maxCachePieces)
         , fOffset(fileOffset)
         , fSize(fileSize)
-        , absRPos(fileOffset)       
+        , absRPos(fileOffset)
         , updatingBuffer(false) {
     absWPos = firstPieceOffset();
 }
@@ -30,7 +30,7 @@ int FlatPieceMemoryStorage::read(unsigned char* buf, size_t len) {
     int length = static_cast<int>(len);
 
     mutex.lock();
-   
+
     if (absRPos >= absWPos) {
         // no bytes available for reading
         bufferNotEmpty.wait(&mutex);
@@ -113,8 +113,6 @@ void FlatPieceMemoryStorage::write(const unsigned char* buf
 
     if (itr != slotList.end() && itr->first == pieceIndex) {
         updatingBuffer = true;
-        qlonglong slotAbsPosition = pieceAbsPos(pieceIndex);
-        int writingSlot = absWPos / pieceLen;
         int dataPos = posInCacheByPiece(pieceIndex) + offset;
         assert(dataPos >= 0);
         mutex.unlock();
@@ -123,22 +121,30 @@ void FlatPieceMemoryStorage::write(const unsigned char* buf
 
         mutex.lock();
 
-        //int bytesBefore = itr->second.bytesAvailable();
+        // update current slot bytes available
         itr->second += qMakePair(offset, offset + len);
-        // write data
-        int bytesAfter = itr->second.bytesAvailable();
 
-        // writing position in current slot
-        if (writingSlot == pieceIndex) {
-            // set writing position to new position if bytes available greater than last writing position            
-            absWPos = std::max(slotAbsPosition + bytesAfter, absWPos);
+        // move forward writing position as much as possible
+        for (; itr != slotList.end(); ++itr) {
+            int writingSlot = absWPos / pieceLen;
 
-            if (absWPos > absRPos) {
-                // wake up reading only if absolute writing position greater than absolute reading position
-                bufferNotEmpty.wakeAll();
+            // writing position in current slot
+            if (writingSlot == itr->first) {
+                // set writing position to new position if bytes available greater than last writing position
+                absWPos = std::max(pieceAbsPos(itr->first) + itr->second.bytesAvailable(), absWPos);
+            }
+
+            // slot is not full, do not continue
+            if (itr->second.bytesAvailable() < getPieceLength(itr->first)) {
+                break;
             }
         }
-        
+
+        if (absWPos > absRPos) {
+            // wake up reading only if absolute writing position greater than absolute reading position
+            bufferNotEmpty.wakeAll();
+        }
+
         bufferNotUpdating.wakeAll();
         updatingBuffer = false;
     } else {
@@ -155,14 +161,18 @@ int FlatPieceMemoryStorage::seek(quint64 pos) {
     assert(!updatingBuffer);
     qlonglong absPos = pos + fOffset;
     absRPos = absPos;
+
     int currentPieceIndex = absWPos / pieceLen;
     int pieceIndex = absPos / pieceLen;
+
     // remove all downloading slots less than current writing border
     slotList.erase(std::remove_if(slotList.begin(), slotList.end()
         , [=](Slot slot) {
             return slot.first < pieceIndex;
         })
         , slotList.end());
+
+
 
     // if we are seek in the same slot - use current writing position else set writing position to the start of requested piece
     absWPos = (currentPieceIndex == pieceIndex) ? absWPos : pieceAbsPos(pieceIndex);

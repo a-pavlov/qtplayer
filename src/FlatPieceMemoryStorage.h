@@ -86,7 +86,7 @@ public:
     int read(unsigned char* buf, size_t len);
 
     /*  move reading position in player's thread, expect it won't be in parallel with reading ^^^.
-        Wait on bufferNotUpdating 
+        Wait on bufferNotUpdating
     */
     int seek(quint64 pos);
 
@@ -94,7 +94,7 @@ public:
     void write(const unsigned char* buf
         , int len
         , int offset
-        , int pieceIndex);    
+        , int pieceIndex);
 
     void requestPieces();
 signals:

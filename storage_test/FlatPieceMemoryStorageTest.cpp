@@ -179,3 +179,62 @@ void FlatPieceMemoryStorageTest::testSyncOperating() {
     QCOMPARE(pms.absoluteReadingPosition(), 34ll);
     QCOMPARE(memcmp(&rb2[0], &data[22], 12), 0);
 }
+
+void FlatPieceMemoryStorageTest::testWritingPositionExansion() {
+    constexpr auto pieceLength = 10;
+    constexpr auto lastPieceLength = 5; // in file
+    constexpr auto maxPieces = 4;
+    constexpr auto fileOffset = 6ll;
+    constexpr auto fileSize = 38ll;
+
+    FlatPieceMemoryStorage pms(pieceLength
+        , lastPieceLength
+        , maxPieces
+        , fileOffset
+        , fileSize);
+
+    QList<int> rp;
+    QList<int> oorp;
+
+    connect(&pms, &FlatPieceMemoryStorage::piecesRequested, [&](QList<int> pieces) {
+        rp = pieces;
+        });
+
+    QCOMPARE(pms.posInCacheByAbsPos(fileOffset), 6);
+    pms.requestPieces();
+    QCOMPARE(rp.size(), 4);
+    QCOMPARE(rp.at(0), 0);
+    QCOMPARE(rp.at(1), 1);
+    QCOMPARE(rp.at(2), 2);
+    QCOMPARE(rp.at(3), 3);
+
+    QCOMPARE(pms.absoluteWritingPosition(), 0ll);
+    QCOMPARE(pms.absoluteReadingPosition(), 6ll);
+    pms.write(&data[0], 8, 0, 0);
+    QCOMPARE(pms.absoluteWritingPosition(), 8ll);
+    QCOMPARE(pms.absoluteReadingPosition(), 6ll);
+
+    pms.write(&data[0], 8, 0, 1);
+    QCOMPARE(pms.absoluteWritingPosition(), 8ll);
+    pms.write(&data[0], 2, 0, 2);
+    QCOMPARE(pms.absoluteWritingPosition(), 8ll);
+    pms.write(&data[0], 7, 0, 3);
+    QCOMPARE(pms.absoluteWritingPosition(), 8ll);
+
+    // piece: 0  1  2  3
+    // bytes: 8  8  2  7
+    pms.write(&data[0], 8, 2, 2);
+    QCOMPARE(pms.absoluteWritingPosition(), 8ll);
+
+    // piece: 0  1  2   3
+    // bytes: 8  8  10  7
+    pms.write(&data[0], 2, 8, 0);
+    // piece: 0  1  2   3
+    // bytes: 10 8  10  7
+    QCOMPARE(pms.absoluteWritingPosition(), 18ll);
+    pms.write(&data[0], 2, 8, 1);
+
+    // piece: 0  1  2  3
+    // bytes: 10 10 10 7
+    QCOMPARE(pms.absoluteWritingPosition(), 37ll);
+}
