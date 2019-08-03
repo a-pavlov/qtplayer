@@ -97,6 +97,11 @@ public:
         , int pieceIndex);
 
     void requestPieces();
+    void requestSlots(int pieceIndexStartFrom);
+    const QList<Slot>& getSlots() const {
+        return slotList;
+    }
+
 signals:
     void piecesRequested(QList<int>);
     void pieceOutOfRangeReceived(int length, int offset, int pieceIndex);

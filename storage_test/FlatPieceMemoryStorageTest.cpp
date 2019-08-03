@@ -238,3 +238,53 @@ void FlatPieceMemoryStorageTest::testWritingPositionExansion() {
     // bytes: 10 10 10 7
     QCOMPARE(pms.absoluteWritingPosition(), 37ll);
 }
+
+void FlatPieceMemoryStorageTest::testSlotsReq() {
+    constexpr auto pieceLength = 10;
+    constexpr auto lastPieceLength = 10; // in file
+    constexpr auto maxPieces = 3;
+    constexpr auto fileOffset = 0ll;
+    constexpr auto fileSize = 383ll;
+
+    FlatPieceMemoryStorage pms(pieceLength
+        , lastPieceLength
+        , maxPieces
+        , fileOffset
+        , fileSize);
+
+    // simple request
+    QVERIFY(pms.getSlots().isEmpty());
+    pms.requestSlots(3);
+    QCOMPARE(pms.getSlots().size(), 3);
+    for (int i = 0; i < 3; ++i) {
+        QCOMPARE(pms.getSlots().at(i).first, 3 + i);
+    }
+
+    // gap less than size of cache
+    pms.requestSlots(1);
+    QCOMPARE(pms.getSlots().size(), 3);
+    for (int i = 0; i < 3; ++i) {
+        QCOMPARE(pms.getSlots().at(i).first, 1 + i);
+    }
+
+    // totally remove all slots
+    pms.requestSlots(10);
+    QCOMPARE(pms.getSlots().size(), 3);
+    for (int i = 0; i < 3; ++i) {
+        QCOMPARE(pms.getSlots().at(i).first, 10 + i);
+    }
+
+    // gap greater than cache size
+    pms.requestSlots(5);
+    QCOMPARE(pms.getSlots().size(), 3);
+    for (int i = 0; i < 3; ++i) {
+        QCOMPARE(pms.getSlots().at(i).first, 5 + i);
+    }
+
+    // gap equals cache size
+    pms.requestSlots(2);
+    QCOMPARE(pms.getSlots().size(), 3);
+    for (int i = 0; i < 3; ++i) {
+        QCOMPARE(pms.getSlots().at(i).first, 2 + i);
+    }
+}

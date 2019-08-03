@@ -17,6 +17,8 @@ private slots:
 
     // check writing position moving correctly in case of unordered data writing
     void testWritingPositionExansion();
+
+    void testSlotsReq();
 };
 
 #endif // FLATPIECEMEMORYSTORAGETEST_H

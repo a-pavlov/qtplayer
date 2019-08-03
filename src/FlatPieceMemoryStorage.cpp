@@ -159,23 +159,28 @@ int FlatPieceMemoryStorage::seek(quint64 pos) {
     mutex.lock();
     if (updatingBuffer) bufferNotUpdating.wait(&mutex);
     assert(!updatingBuffer);
-    qlonglong absPos = pos + fOffset;
-    absRPos = absPos;
+    qlonglong newAbsPos = pos + fOffset;
+    absRPos = newAbsPos;
 
     int currentPieceIndex = absWPos / pieceLen;
-    int pieceIndex = absPos / pieceLen;
+    int newPieceIndex = newAbsPos / pieceLen;
 
     // remove all downloading slots less than current writing border
     slotList.erase(std::remove_if(slotList.begin(), slotList.end()
         , [=](Slot slot) {
-            return slot.first < pieceIndex;
+            return slot.first < newPieceIndex;
         })
         , slotList.end());
 
 
-
     // if we are seek in the same slot - use current writing position else set writing position to the start of requested piece
-    absWPos = (currentPieceIndex == pieceIndex) ? absWPos : pieceAbsPos(pieceIndex);
+    absWPos = (currentPieceIndex == newPieceIndex) ? absWPos : pieceAbsPos(newPieceIndex);
+
+    // generate request
+    if (slotList.isEmpty()) {
+
+    }
+
     mutex.unlock();
     return 0;
 }
@@ -202,4 +207,40 @@ void FlatPieceMemoryStorage::requestPieces() {
     }
 
     emit piecesRequested(rp);
+}
+
+void FlatPieceMemoryStorage::requestSlots(int pieceIndexStartFrom) {
+    slotList.erase(std::remove_if(slotList.begin(), slotList.end()
+        , [=](Slot slot) {
+            return slot.first < pieceIndexStartFrom;
+        })
+        , slotList.end());
+
+    // preprend slots
+    if (!slotList.isEmpty()) {
+        assert(pieceIndexStartFrom <= slotList.begin()->first);
+        int gapSize = slotList.begin()->first - pieceIndexStartFrom;
+
+        if (gapSize >= cacheSizeInPieces) {
+            slotList.clear();
+        } else {
+            while (gapSize + slotList.size() > cacheSizeInPieces) {
+                slotList.removeLast();
+            }
+        }
+
+        if (!slotList.isEmpty()) {
+            int slotIndex = slotList.begin()->first;
+            assert(pieceIndexStartFrom <= slotIndex);
+            while (slotIndex != pieceIndexStartFrom) {
+                slotList.prepend(qMakePair(--slotIndex, Range<int>()));
+            }
+
+            pieceIndexStartFrom = slotList.last().first;
+        }
+    }
+
+    while (slotList.size() < cacheSizeInPieces && pieceIndexStartFrom <= lastPiece()) {
+        slotList.append(qMakePair(pieceIndexStartFrom++, Range<int>()));
+    }
 }
