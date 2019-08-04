@@ -30,13 +30,11 @@ FlatPieceMemoryStorageTest::FlatPieceMemoryStorageTest(QObject *parent): QObject
 
 void FlatPieceMemoryStorageTest::testAuxiliaryMethods1() {
     constexpr auto pieceLength = 5;
-    constexpr auto lastPieceLength = 5; // in file
     constexpr auto maxPieces = 3;
     constexpr auto fileOffset = 8ll;
     constexpr auto fileSize = 29ll;
 
     FlatPieceMemoryStorage pms(pieceLength
-        , lastPieceLength
         , maxPieces
         , fileOffset
         , fileSize);
@@ -57,21 +55,20 @@ void FlatPieceMemoryStorageTest::testAuxiliaryMethods1() {
     QCOMPARE(pms.posInCacheByPiece(4), 0);
     QCOMPARE(pms.posInCacheByPiece(6), 10);
 
-    QCOMPARE(pms.getPieceLength(6), pieceLength);
-    QCOMPARE(pms.getPieceLength(7), pieceLength);
+    QCOMPARE(pms.getPieceLength(), pieceLength);
+    QCOMPARE(pms.getPieceLength(), pieceLength);
 
     constexpr auto lastPieceInTorrent = 3;
 
     // one byte file in the last piece of torrent
     FlatPieceMemoryStorage pmsLast(pieceLength
-        , lastPieceInTorrent
         , maxPieces
         , 8ll*pieceLength + 1
         , 1);
     QCOMPARE(pmsLast.firstPiece(), 8);
     QCOMPARE(pmsLast.lastPiece(), 8);
     QCOMPARE(pmsLast.firstPieceOffset(), 8ll*pieceLength);
-    QCOMPARE(pmsLast.getPieceLength(8), lastPieceInTorrent);
+    QCOMPARE(pmsLast.getPieceLength(), pieceLength);
     QCOMPARE(pmsLast.posInCacheByAbsPos(8ll*pieceLength), 0);
     QCOMPARE(pmsLast.posInCacheByAbsPos(8ll*pieceLength + 1), 1);
 }
@@ -82,13 +79,11 @@ void FlatPieceMemoryStorageTest::testAuxiliaryMethods2() {
 
 void FlatPieceMemoryStorageTest::testSyncOperating() {
     constexpr auto pieceLength = 10;
-    constexpr auto lastPieceLength = 5; // in file
     constexpr auto maxPieces = 3;
     constexpr auto fileOffset = 12ll;
     constexpr auto fileSize = 50ll;
 
     FlatPieceMemoryStorage pms(pieceLength
-        , lastPieceLength
         , maxPieces
         , fileOffset
         , fileSize);
@@ -175,13 +170,11 @@ void FlatPieceMemoryStorageTest::testSyncOperating() {
 
 void FlatPieceMemoryStorageTest::testWritingPositionExansion() {
     constexpr auto pieceLength = 10;
-    constexpr auto lastPieceLength = 5; // in file
     constexpr auto maxPieces = 4;
     constexpr auto fileOffset = 6ll;
     constexpr auto fileSize = 38ll;
 
     FlatPieceMemoryStorage pms(pieceLength
-        , lastPieceLength
         , maxPieces
         , fileOffset
         , fileSize);
@@ -234,13 +227,11 @@ void FlatPieceMemoryStorageTest::testWritingPositionExansion() {
 
 void FlatPieceMemoryStorageTest::testSlotsReq() {
     constexpr auto pieceLength = 10;
-    constexpr auto lastPieceLength = 10; // in file
     constexpr auto maxPieces = 3;
     constexpr auto fileOffset = 0ll;
     constexpr auto fileSize = 383ll;
 
     FlatPieceMemoryStorage pms(pieceLength
-        , lastPieceLength
         , maxPieces
         , fileOffset
         , fileSize);

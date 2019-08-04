@@ -7,13 +7,11 @@
 #include <algorithm>
 
 FlatPieceMemoryStorage::FlatPieceMemoryStorage(int pieceLength
-    , int lastPieceLength
     , int maxCachePieces
     , qlonglong fileOffset
     , qlonglong fileSize) :
         buffer(new unsigned char[pieceLength * maxCachePieces])
         , pieceLen(pieceLength)
-        , lastPieceLen(lastPieceLength)
         , cacheSizeInPieces(maxCachePieces)
         , fOffset(fileOffset)
         , fSize(fileSize)
@@ -123,7 +121,7 @@ void FlatPieceMemoryStorage::write(const unsigned char* buf
             }
 
             // slot is not full, do not continue
-            if (itr->second.bytesAvailable() < getPieceLength(itr->first)) {
+            if (itr->second.bytesAvailable() < pieceLen) {
                 break;
             }
         }

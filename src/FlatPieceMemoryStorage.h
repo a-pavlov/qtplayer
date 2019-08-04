@@ -19,7 +19,6 @@ class FlatPieceMemoryStorage: public QObject {
 private:
     unsigned char* buffer;
     int pieceLen;
-    int lastPieceLen;
     int cacheSizeInPieces;
     qlonglong fOffset;
     qlonglong fSize;
@@ -37,7 +36,6 @@ private:
     QList<Slot> slotList;
 public:
     FlatPieceMemoryStorage(int pieceLength
-        , int lastPieceLength
         , int maxCachePieces
         , qlonglong fileOffset
         , qlonglong fileSize);
@@ -64,10 +62,8 @@ public:
         return ((pieceIndex - firstPiece()) % cacheSizeInPieces) * pieceLen;
     }
 
-    int getPieceLength(int index)  const {
-        Q_ASSERT(index >= firstPiece());
-        Q_ASSERT(index <= lastPiece());
-        return index == lastPiece() ? lastPieceLen : pieceLen;
+    int getPieceLength()  const {
+        return pieceLen;
     }
 
     // just for testing purposes
