@@ -101,6 +101,8 @@ void FlatPieceMemoryStorageTest::testSyncOperating() {
         oorp.append(pieceIndex);
     });
 
+    QCOMPARE(pms.bytesInLastPiece(), 2);
+
     QCOMPARE(pms.posInCacheByAbsPos(fileOffset), 2);
     pms.requestSlots(pms.firstPiece());
     QCOMPARE(rp.size(), 3);
@@ -186,6 +188,7 @@ void FlatPieceMemoryStorageTest::testWritingPositionExansion() {
         rp = pieces;
         });
 
+    QCOMPARE(pms.bytesInLastPiece(), 4);
     QCOMPARE(pms.posInCacheByAbsPos(fileOffset), 6);
     pms.requestSlots(pms.firstPiece());
     QCOMPARE(rp.size(), 4);

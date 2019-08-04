@@ -45,6 +45,9 @@ public:
     int lastPiece() const { return static_cast<int>((fOffset + fSize - 1) / pieceLen); }
     int maxPieces() const { return std::min(cacheSizeInPieces, lastPiece() - firstPiece() + 1); }
     int cacheSize() const { return pieceLen * cacheSizeInPieces; }
+    qlonglong bytesInLastPiece() const {
+        return (fSize + fOffset - lastPiece()*pieceLen);
+    }
 
     qlonglong pieceAbsPos(int pieceIndex) const {
         return static_cast<qlonglong>(pieceIndex)*pieceLen;
