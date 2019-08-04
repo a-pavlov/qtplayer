@@ -80,6 +80,10 @@ int FlatPieceMemoryStorage::read(unsigned char* buf, size_t len) {
 
     mutex.lock();
     absRPos += obtainBytes;
+
+    requestSlots(absRPos / pieceLen);
+
+    /*
     // remove all read slots
     int lastSlotIndex = slotList.back().first;
     slotList.erase(std::remove_if(slotList.begin(), slotList.end()
@@ -92,7 +96,7 @@ int FlatPieceMemoryStorage::read(unsigned char* buf, size_t len) {
     while(slotList.size() < cacheSizeInPieces && lastSlotIndex < lastPiece()) {
         slotList.append(qMakePair(++lastSlotIndex, Range<int>()));
     }
-
+    */
     // send signal to external system for request new slots here
 
     bufferNotFull.wakeAll();
@@ -165,8 +169,11 @@ int FlatPieceMemoryStorage::seek(quint64 pos) {
     int currentPieceIndex = absWPos / pieceLen;
     int newPieceIndex = newAbsPos / pieceLen;
 
+    requestSlots(newPieceIndex);
+    absWPos = (currentPieceIndex == newPieceIndex) ? absWPos : pieceAbsPos(newPieceIndex);
+
     // remove all downloading slots less than current writing border
-    slotList.erase(std::remove_if(slotList.begin(), slotList.end()
+    /*slotList.erase(std::remove_if(slotList.begin(), slotList.end()
         , [=](Slot slot) {
             return slot.first < newPieceIndex;
         })
@@ -180,6 +187,7 @@ int FlatPieceMemoryStorage::seek(quint64 pos) {
     if (slotList.isEmpty()) {
 
     }
+    */
 
     mutex.unlock();
     return 0;
@@ -195,18 +203,16 @@ qlonglong FlatPieceMemoryStorage::absoluteWritingPosition() {
     return absWPos;
 }
 
-void FlatPieceMemoryStorage::requestPieces() {
-    int lastSlotIndex = std::max(static_cast<int>(absRPos/pieceLen), slotList.isEmpty()?-1:slotList.back().first + 1);
-    assert(lastSlotIndex >= 0);
-    QList<int> rp;
-    std::transform(slotList.begin(), slotList.end(), std::back_inserter(rp), [](Slot s) { return s.first; });
-
-    while(slotList.size() < cacheSizeInPieces && lastSlotIndex <= lastPiece()) {
-        slotList.append(qMakePair(lastSlotIndex++, Range<int>()));
-        rp.append(slotList.back().first);
+void checkSlotsInvariant(const QList<Slot>& list) {
+    auto startSlotIndex = -1;
+    for (auto slot : list) {
+        if (startSlotIndex != -1) {
+            assert(++startSlotIndex == slot.first);
+        }
+        else {
+            startSlotIndex = slot.first;
+        }
     }
-
-    emit piecesRequested(rp);
 }
 
 void FlatPieceMemoryStorage::requestSlots(int pieceIndexStartFrom) {
@@ -216,11 +222,11 @@ void FlatPieceMemoryStorage::requestSlots(int pieceIndexStartFrom) {
         })
         , slotList.end());
 
-    // preprend slots
     if (!slotList.isEmpty()) {
         assert(pieceIndexStartFrom <= slotList.begin()->first);
         int gapSize = slotList.begin()->first - pieceIndexStartFrom;
 
+        // remove out of cache size elements in slot list
         if (gapSize >= cacheSizeInPieces) {
             slotList.clear();
         } else {
@@ -229,6 +235,7 @@ void FlatPieceMemoryStorage::requestSlots(int pieceIndexStartFrom) {
             }
         }
 
+        // prepend slots
         if (!slotList.isEmpty()) {
             int slotIndex = slotList.begin()->first;
             assert(pieceIndexStartFrom <= slotIndex);
@@ -236,11 +243,18 @@ void FlatPieceMemoryStorage::requestSlots(int pieceIndexStartFrom) {
                 slotList.prepend(qMakePair(--slotIndex, Range<int>()));
             }
 
-            pieceIndexStartFrom = slotList.last().first;
+            pieceIndexStartFrom = slotList.last().first + 1;
         }
     }
 
+    // append slots
     while (slotList.size() < cacheSizeInPieces && pieceIndexStartFrom <= lastPiece()) {
         slotList.append(qMakePair(pieceIndexStartFrom++, Range<int>()));
     }
+
+    checkSlotsInvariant(slotList);
+
+    QList<int> rp;
+    std::transform(slotList.begin(), slotList.end(), std::back_inserter(rp), [](Slot s) { return s.first; });
+    emit piecesRequested(rp);
 }

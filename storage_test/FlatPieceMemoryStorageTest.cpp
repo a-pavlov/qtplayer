@@ -107,16 +107,17 @@ void FlatPieceMemoryStorageTest::testSyncOperating() {
     });
 
     QCOMPARE(pms.posInCacheByAbsPos(fileOffset), 2);
-    pms.requestPieces();
+    //pms.requestPieces();
+    pms.requestSlots(pms.firstPiece());
     QCOMPARE(rp.size(), 3);
     QCOMPARE(rp.at(0), 1);
     QCOMPARE(rp.at(1), 2);
     QCOMPARE(rp.at(2), 3);
-    pms.requestPieces();
-    QCOMPARE(rp.size(), 3);
-    QCOMPARE(rp.at(0), 1);
-    QCOMPARE(rp.at(1), 2);
-    QCOMPARE(rp.at(2), 3);
+    //pms.requestPieces();
+    //QCOMPARE(rp.size(), 3);
+    //QCOMPARE(rp.at(0), 1);
+    //QCOMPARE(rp.at(1), 2);
+    //QCOMPARE(rp.at(2), 3);
 
     // do nothing since piece 0 not in range
     pms.write(&data[0], 4, 0, 0);
@@ -125,7 +126,7 @@ void FlatPieceMemoryStorageTest::testSyncOperating() {
     QCOMPARE(oorp.at(0), 0);
     QCOMPARE(oorp.at(1), 0);
 
-    pms.requestPieces();
+    //pms.requestPieces();
     QCOMPARE(3, rp.size());
 
     // first piece writing
@@ -162,12 +163,12 @@ void FlatPieceMemoryStorageTest::testSyncOperating() {
     QCOMPARE(memcmp(&rbuff[0], &data[17], 5), 0);
     QCOMPARE(pms.absoluteReadingPosition(), 22ll);
     QCOMPARE(pms.absoluteWritingPosition(), 30ll);
-    pms.requestPieces();
+    //pms.requestPieces();
     QCOMPARE(3, rp.size());
 
-    QCOMPARE(2, rp.at(0));
-    QCOMPARE(3, rp.at(1));
-    QCOMPARE(4, rp.at(2));
+    QCOMPARE(rp.at(0), 2);
+    QCOMPARE(rp.at(1), 3);
+    QCOMPARE(rp.at(2), 4);
 
     pms.write(&data[30], 1, 0, 3);
     QCOMPARE(pms.absoluteWritingPosition(), 31ll);
@@ -201,7 +202,7 @@ void FlatPieceMemoryStorageTest::testWritingPositionExansion() {
         });
 
     QCOMPARE(pms.posInCacheByAbsPos(fileOffset), 6);
-    pms.requestPieces();
+    pms.requestSlots(pms.firstPiece());
     QCOMPARE(rp.size(), 4);
     QCOMPARE(rp.at(0), 0);
     QCOMPARE(rp.at(1), 1);
@@ -286,5 +287,19 @@ void FlatPieceMemoryStorageTest::testSlotsReq() {
     QCOMPARE(pms.getSlots().size(), 3);
     for (int i = 0; i < 3; ++i) {
         QCOMPARE(pms.getSlots().at(i).first, 2 + i);
+    }
+
+    // request the same pieces again
+    pms.requestSlots(2);
+    QCOMPARE(pms.getSlots().size(), 3);
+    for (int i = 0; i < 3; ++i) {
+        QCOMPARE(pms.getSlots().at(i).first, 2 + i);
+    }
+
+    // remove head of slots
+    pms.requestSlots(3);
+    QCOMPARE(pms.getSlots().size(), 3);
+    for (int i = 0; i < 3; ++i) {
+        QCOMPARE(pms.getSlots().at(i).first, 3 + i);
     }
 }

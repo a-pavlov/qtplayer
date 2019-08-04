@@ -96,7 +96,6 @@ public:
         , int offset
         , int pieceIndex);
 
-    void requestPieces();
     void requestSlots(int pieceIndexStartFrom);
     const QList<Slot>& getSlots() const {
         return slotList;
