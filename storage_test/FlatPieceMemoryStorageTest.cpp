@@ -107,17 +107,11 @@ void FlatPieceMemoryStorageTest::testSyncOperating() {
     });
 
     QCOMPARE(pms.posInCacheByAbsPos(fileOffset), 2);
-    //pms.requestPieces();
     pms.requestSlots(pms.firstPiece());
     QCOMPARE(rp.size(), 3);
     QCOMPARE(rp.at(0), 1);
     QCOMPARE(rp.at(1), 2);
     QCOMPARE(rp.at(2), 3);
-    //pms.requestPieces();
-    //QCOMPARE(rp.size(), 3);
-    //QCOMPARE(rp.at(0), 1);
-    //QCOMPARE(rp.at(1), 2);
-    //QCOMPARE(rp.at(2), 3);
 
     // do nothing since piece 0 not in range
     pms.write(&data[0], 4, 0, 0);
@@ -126,7 +120,6 @@ void FlatPieceMemoryStorageTest::testSyncOperating() {
     QCOMPARE(oorp.at(0), 0);
     QCOMPARE(oorp.at(1), 0);
 
-    //pms.requestPieces();
     QCOMPARE(3, rp.size());
 
     // first piece writing
@@ -163,7 +156,6 @@ void FlatPieceMemoryStorageTest::testSyncOperating() {
     QCOMPARE(memcmp(&rbuff[0], &data[17], 5), 0);
     QCOMPARE(pms.absoluteReadingPosition(), 22ll);
     QCOMPARE(pms.absoluteWritingPosition(), 30ll);
-    //pms.requestPieces();
     QCOMPARE(3, rp.size());
 
     QCOMPARE(rp.at(0), 2);

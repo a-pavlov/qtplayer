@@ -79,27 +79,11 @@ int FlatPieceMemoryStorage::read(unsigned char* buf, size_t len) {
     assert(obtainBytes != -1);
 
     mutex.lock();
+
     absRPos += obtainBytes;
-
     requestSlots(absRPos / pieceLen);
-
-    /*
-    // remove all read slots
-    int lastSlotIndex = slotList.back().first;
-    slotList.erase(std::remove_if(slotList.begin(), slotList.end()
-                   , [=](Slot slot) {
-        return absRPos >= (pieceAbsPos(slot.first) + getPieceLength(slot.first));
-    })
-    , slotList.end());
-
-    // request new slots
-    while(slotList.size() < cacheSizeInPieces && lastSlotIndex < lastPiece()) {
-        slotList.append(qMakePair(++lastSlotIndex, Range<int>()));
-    }
-    */
-    // send signal to external system for request new slots here
-
     bufferNotFull.wakeAll();
+
     mutex.unlock();
 
     return obtainBytes;
@@ -168,27 +152,8 @@ int FlatPieceMemoryStorage::seek(quint64 pos) {
 
     int currentPieceIndex = absWPos / pieceLen;
     int newPieceIndex = newAbsPos / pieceLen;
-
+    absWPos = (currentPieceIndex == newPieceIndex) ? absWPos : pieceAbsPos(newPieceIndex);
     requestSlots(newPieceIndex);
-    absWPos = (currentPieceIndex == newPieceIndex) ? absWPos : pieceAbsPos(newPieceIndex);
-
-    // remove all downloading slots less than current writing border
-    /*slotList.erase(std::remove_if(slotList.begin(), slotList.end()
-        , [=](Slot slot) {
-            return slot.first < newPieceIndex;
-        })
-        , slotList.end());
-
-
-    // if we are seek in the same slot - use current writing position else set writing position to the start of requested piece
-    absWPos = (currentPieceIndex == newPieceIndex) ? absWPos : pieceAbsPos(newPieceIndex);
-
-    // generate request
-    if (slotList.isEmpty()) {
-
-    }
-    */
-
     mutex.unlock();
     return 0;
 }
