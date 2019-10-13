@@ -2,18 +2,15 @@
 #include <QtTest/QtTest>
 
 #include "TorrentInfoTest.h"
-#include "PieceMemoryStorageTest.h"
 #include "RangeTest.h"
 
 int main(int argc, char *argv[]) {
     //freopen("testing.log", "w", stdout);
     QCoreApplication app(argc, argv);
     TorrentInfoTest torrentInfoTest;
-    PieceMemoryStorageTest pieceMemoryStorageTest;
     RangeTest rangeTest;
 
-    return QTest::qExec(&torrentInfoTest, argc, argv)
-            | QTest::qExec(&pieceMemoryStorageTest, argc, argv)
+    return QTest::qExec(&torrentInfoTest, argc, argv)            
             | QTest::qExec(&rangeTest, argc, argv);
 }
 
