@@ -12,6 +12,10 @@
 
 #include "Range.h"
 
+/*
+    first   - index
+    second  - range
+*/
 typedef QPair<int, Range<int> > Slot;
 
 class FlatPieceMemoryStorage: public QObject {
@@ -70,7 +74,7 @@ public:
     }
 
     // just for testing purposes
-    int bytesToBeCopied(int len) {
+    int bytesToBeCopied(int len) const {
         int localRPos = posInCacheByAbsPos(absRPos);
         int localWPos = posInCacheByAbsPos(absWPos);
         int distance = localWPos - localRPos;

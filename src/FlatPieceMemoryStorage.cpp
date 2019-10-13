@@ -25,7 +25,7 @@ FlatPieceMemoryStorage::~FlatPieceMemoryStorage() {
 }
 
 int FlatPieceMemoryStorage::read(unsigned char* buf, size_t len) {
-    int length = static_cast<int>(len);
+    int bytesRequested = static_cast<int>(len);
 
     mutex.lock();
 
@@ -36,41 +36,51 @@ int FlatPieceMemoryStorage::read(unsigned char* buf, size_t len) {
 
     assert(absWPos > absRPos);
 
-    // we have bytes
-    int localRPos = posInCacheByAbsPos(absRPos);
-    int localWPos = posInCacheByAbsPos(absWPos);
+    int localRPos = posInCacheByAbsPos(absRPos);    // reading offset in flat cache
+    int localWPos = posInCacheByAbsPos(absWPos);    // writing offset in flat cache
 
     mutex.unlock();
 
     int distance = localWPos - localRPos;
-    int bytesToBeCopied = distance > 0 ? std::min(length, distance) : (cacheSize() - localRPos) + std::min(length - cacheSize() + localRPos, localWPos);
+    /*
+        case 1: wpos > rpos - forward to the writing position
+        |      w->| |
+        |***********|
+        |   r->|xx  |
+        case 2: wpos < rpos - forward to the end of cache + forward from the beginning of cache to the writing position
+        |w->|       |
+        |***********|
+        |   r->|xxxx|
+        |xxx        |
+    */
+    int bytesToBeCopied = distance > 0 ? std::min(bytesRequested, distance) : (cacheSize() - localRPos) + std::min(bytesRequested - cacheSize() + localRPos, localWPos);
     assert(distance != 0);
     assert(bytesToBeCopied > 0);
 
     int obtainBytes = -1;
 
     if (distance > 0 || (cacheSize() - localRPos) > static_cast<int>(len)) {
-        // forward direction to the writing position
-        obtainBytes = std::min(static_cast<int>(len), distance > 0 ? localWPos - localRPos : cacheSize() - localRPos);
+        // forward direction to the writing position or to the end of cache if enough bytes
+        obtainBytes = std::min(bytesRequested, distance > 0 ? localWPos - localRPos : cacheSize() - localRPos);
         memcpy(buf, buffer + localRPos, obtainBytes);
     }
     else {
-        // forward direction to the end of cache
-        int firstPieceLen = cacheSize() - localRPos;
+        // forward direction to the end of cache, tail bytes
+        int tailBytes = cacheSize() - localRPos;
 
-        if (firstPieceLen > 0) {
-            memcpy(buf, buffer + localRPos, firstPieceLen);
+        if (tailBytes > 0) {
+            memcpy(buf, buffer + localRPos, tailBytes);
         }
 
         // forward direction from zero to writing position
         // calculate remain bytes
-        obtainBytes = std::min(static_cast<int>(len) - firstPieceLen, localWPos);
+        obtainBytes = std::min(bytesRequested - tailBytes, localWPos);
 
         if (obtainBytes > 0) {
-            memcpy(buf + firstPieceLen, buffer, obtainBytes);
+            memcpy(buf + tailBytes, buffer, obtainBytes);
         }
 
-        obtainBytes += firstPieceLen;
+        obtainBytes += tailBytes;
     }
 
     assert(obtainBytes == bytesToBeCopied);
